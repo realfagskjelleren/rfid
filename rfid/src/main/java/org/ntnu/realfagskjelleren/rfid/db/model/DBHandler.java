@@ -17,7 +17,6 @@ public interface DBHandler {
     public boolean rfid_exists(String rfid);
     public boolean ecc_exists(int ecc);
 
-    public int credit(String rfid);
     public void deposit(String rfid, int value);
     public void deduct(String rfid, int value);
 
