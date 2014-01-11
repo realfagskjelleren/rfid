@@ -1,0 +1,9 @@
+.idea/
+*.iml
+settings/
+log4j2.xml
+target/
+.iws
+*.ipr
+*.db
+*/unitTestSerializedData
