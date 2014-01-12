@@ -9,7 +9,7 @@ import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 import org.ntnu.realfagskjelleren.rfid.settings.VerifySettings;
 
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -25,13 +25,14 @@ public class POS {
 
     private static Logger logger = LogManager.getLogger(POS.class.getName());
 
-    private final String EXIT_SIGNAL = "0000";
+    private final String EXIT_SIGNAL = "***";
 
     private Scanner scanner = new Scanner(System.in);
     private Settings settings;
     private DBHandler db;
 
     private String currentRFID = "";
+    private User currentUser = null;
 
     public POS() {
         // Attempt to read settings.
@@ -65,18 +66,32 @@ public class POS {
             // Attempt to read command.
             try {
                 if (currentRFID.isEmpty()) {
-                    System.out.println("\nInput card number or type command. Use /*- for help. 0000 to exit.");
+                    System.out.println("╠════════════════════════════════════════════════════════════════════" +
+                            "            --------------------------------------------------------------------");
+                    System.out.println("┃ - Input card number or type command. Use /*- for help, "+ EXIT_SIGNAL +" to exit.");
                 }
+                else {
+                    System.out.println("┃ - Input amount to withdraw or deposit (+).");
+                }
+                System.out.print("> ");
                 input = scanner.nextLine();
             } catch (NoSuchElementException e) {
-                // Occurs when the program is interrupted. Basically means quit.
+                // Occurs when the program is interrupted. Essentially means quit.
                 break;
             }
 
             List<String> response = handleInput(input);
 
             for (String s : response) {
-                System.out.println(s);
+                if (s.startsWith("!")) {
+                    resetCurrentInfo();
+                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    System.out.println(s);
+                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                }
+                else {
+                    System.out.println("┃ " + s);
+                }
             }
 
         }
@@ -99,15 +114,34 @@ public class POS {
                 break;
             case "":
                 if (currentRFID.isEmpty()) {
-                    response.add("----- Not valid input. -----");
+                    response.add("Not valid input.");
                 }
                 else {
-                    response.add("----- Not valid input. Transaction aborted. -----");
+                    response.add("Not valid input. Transaction aborted.");
                 }
                 currentRFID = "";
                 break;
             default:
-                response = handleTransactions(input);
+                if (input.startsWith("/")) {
+                    response = handleCommand(input);
+                }
+                else {
+                    response = handleTransactions(input);
+                }
+        }
+
+        return response;
+    }
+
+    private List<String> handleCommand(String input) {
+        List<String> response = new ArrayList<>();
+
+        switch (input) {
+            case "/*-":
+                response.add("Help...");
+                break;
+            default:
+                response.add("Unrecognized command. Use /*- for help.");
         }
 
         return response;
@@ -116,37 +150,98 @@ public class POS {
     public List<String> handleTransactions(String input) {
         List<String> response = new ArrayList<>();
 
-        User currentUser = null;
-
         if (isRFID(input)) {
             if (!currentRFID.isEmpty()) {
-                response.add("----- New RFID registered. Transaction aborted. -----");
+                if (input.equals(currentRFID)) {
+                    response.add(String.format("%s Read again. Ignoring..", currentRFID));
+                    return response;
+                }
+                else {
+                    response.add("New RFID registered. Transaction aborted.");
+                    response.add("--------------------------------------------------------------------");
+                }
             }
 
             currentRFID = input;
-            currentUser = db.get_or_create(currentRFID);
+            try {
+                currentUser = db.get_or_create(currentRFID);
+            } catch (SQLException e) {
+                response.add("! SQL error occurred while trying to retrieve user from the database. Check your connection.");
+                return response;
+            }
 
             if (currentUser != null) {
-                response.add("+++++ Read RFID " + currentRFID + " +++++");
-
-                response.add(String.format("Last used: %s", currentUser.getLastUsed()));
-                response.add(String.format("Balance: %d", currentUser.getCredit()));
+                response.add("");
+                response.add("    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
+                response.add("    ┃ Read RFID " + currentRFID);
+                response.add("    ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫");
+                response.add(String.format("    ┃ Last used: %s", currentUser.getLastUsed()));
+                response.add(String.format("    ┃ Balance: %d", currentUser.getCredit()));
+                response.add("    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛");
+                response.add("    ┗-------------------------------------");
+                response.add("");
             }
         }
         else {
             if (currentUser == null) {
-                response.add("----- No RFID registered. Transaction aborted. ------");
+                response.add("No RFID registered. Transaction aborted.");
                 return response;
             }
 
+            // At this point we assume the transaction is to deposit or deduct money.
+            boolean is_deposit = false;
+            if (input.startsWith("+")) {
+                is_deposit = true;
+                input = input.substring(1);
+            }
+
             try {
-                int i = Integer.parseInt(input);
-                System.out.println("Parsed int: " + i);
+                int amount = Integer.parseInt(input);
+                int new_balance;
 
-                db.deposit(currentRFID, i);
-                db.transaction(currentUser.getId(), i, true, currentUser.getCredit()+i);
+                if (is_deposit) {
+                    // Make the deposit
+                    try {
+                        db.deposit(currentRFID, amount);
+                    } catch (SQLException e) {
+                        response.add("! SQL error occurred while attempting to make deposit. Transaction aborted.");
+                        return response;
+                    }
+
+                    new_balance = currentUser.getCredit() + amount;
+                    response.add("");
+                    response.add(String.format("Deposited %d into RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
+                    response.add("");
+                }
+                else {
+                    if (amount > currentUser.getCredit()) {
+                        response.add("! The balance on this card isn't high enough for that purchase.");
+                        return response;
+                    }
+                    else {
+                        try {
+                            db.deduct(currentRFID, amount);
+                        } catch (SQLException e) {
+                            response.add("! SQL error occurred while trying to withdraw money from this account. Transaction aborted.");
+                            return response;
+                        }
+                        new_balance = currentUser.getCredit() - amount;
+                        response.add("");
+                        response.add(String.format("Withdrew %d from RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
+                        response.add("");
+                    }
+                }
+
+                try {
+                    db.transaction(currentUser.getId(), amount, is_deposit, new_balance);
+                } catch (SQLException e) {
+                    response.add("! SQL error occurred while trying to store log this transaction. The money has been deposited.");
+                    return response;
+                }
+
+                resetCurrentInfo();
             } catch (NumberFormatException e) {
-
+                logger.error("Not a number.");
             }
         }
 
@@ -158,8 +253,29 @@ public class POS {
         System.exit(0);
     }
 
+    private void resetCurrentInfo() {
+        currentRFID = "";
+        currentUser = null;
+    }
+
+    private List<String> drawBow(List<String> lines) {
+        List<String> boxedLines = new ArrayList<>();
+
+        boxedLines.add("");
+
+
+        return lines;
+    }
+
+    /**
+     * This method evaluates what an RFID is.
+     * Currently string of a-z 0-9 of length 8 or longer is considered and RFID.
+     *
+     * @param s Input sting to be checked
+     * @return true if the string matched the parameters for RFID.
+     */
     private boolean isRFID(String s) {
-        return s.matches("\\d{8,}");
+        return s.matches("[a-zA-Z0-9]{8,}");
     }
 
     public static void main(String[] args) {
