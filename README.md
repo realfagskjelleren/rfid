@@ -1,11 +1,11 @@
 RFID
 ==========
 
-An RFID POS (Point Of Sale) application that can be used with numeric RFID strings.
+An RFID POS (Point Of Sale) application that can be used with RFID strings as long as length is 8 or greater.
 
 The system was developed by realfagskjelleren for use at the student cellar in Trondheim, Norway.
 It will work with NTNU student cards and employee cards at least, but any card with an RFID string
-of 8-20 digits will work.
+of 8-20 letters or numbers will work.
 
 
 Developer requirements
