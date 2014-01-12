@@ -42,10 +42,6 @@ public class User {
         return credit;
     }
 
-    public void setCredit(int credit) {
-        this.credit = credit;
-    }
-
     public Timestamp getLastUsed() {
         return lastUsed;
     }
