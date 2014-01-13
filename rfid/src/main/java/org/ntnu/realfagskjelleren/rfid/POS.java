@@ -278,7 +278,7 @@ public class POS {
 
     /**
      * This method evaluates what an RFID is.
-     * Currently string of a-z 0-9 of length 8 or longer is considered and RFID.
+     * Currently string of a-z 0-9 of length 8 or longer is considered an RFID.
      *
      * @param s Input sting to be checked
      * @return true if the string matched the parameters for RFID.
