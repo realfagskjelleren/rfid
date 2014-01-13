@@ -23,7 +23,8 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>3.8.1</version>
+            <version>4.8.1</version>
+            <type>jar</type>
             <scope>test</scope>
         </dependency>
 
@@ -41,6 +42,13 @@
             <version>2.2.4</version>
         </dependency>
 
+        <!-- Apache commons-lang3 (StringUtils, used by ConsoleUI) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.1</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -52,7 +60,6 @@
             <artifactId>log4j-core</artifactId>
             <version>2.0-beta9</version>
         </dependency>
-
 
     </dependencies>
 </project>
