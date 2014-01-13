@@ -20,6 +20,7 @@ public class Settings {
     private String dbHost = "** Replace with database host";
     private String dbName = "** Replace with name of the database";
     private String dbPort = "* 3306";
+    private String consoleWidth = "* 120";
 
     public Settings() {
     }
@@ -45,13 +46,21 @@ public class Settings {
     }
 
     public boolean cleanOptionalFields() {
-
         boolean change = false;
+
         if (this.dbPort.startsWith("* ")) {
             this.dbPort = this.dbPort.substring(2);
             change = true;
         }
+        if (this.consoleWidth.startsWith("* ")) {
+            this.consoleWidth = this.consoleWidth.substring(2);
+            change = true;
+        }
 
         return change;
+    }
+
+    public String getConsoleWidth() throws NumberFormatException {
+        return consoleWidth;
     }
 }

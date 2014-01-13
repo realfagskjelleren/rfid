@@ -8,12 +8,12 @@ import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 import org.ntnu.realfagskjelleren.rfid.settings.VerifySettings;
+import org.ntnu.realfagskjelleren.rfid.ui.consoleimpl.ConsoleUI;
+import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
 
 /**
  * This POS system is made to work with an RFID scanner and numeric pad.
@@ -25,27 +25,35 @@ public class POS {
 
     private static Logger logger = LogManager.getLogger(POS.class.getName());
 
-    private final String EXIT_SIGNAL = "***";
-
-    private Scanner scanner = new Scanner(System.in);
     private Settings settings;
     private DBHandler db;
+    private UI ui;
 
     private String currentRFID = "";
     private User currentUser = null;
 
     public POS() {
         // Attempt to read settings.
-        if (!loadSettings()) return;
+        if (!loadSettings()) exit_application();
 
         // Initiate database Check database connection.
-        db = new MySQLDBHandler(settings);
-        if (!checkDB()) return;
+        if (!initiateDB()) exit_application();
+
+        // Start the UI
+        if (!initiateUI()) exit_application();
 
         // Start program.
         start();
     }
 
+    /**
+     * Loads settings for the POS. This is done in it's own class to perform some validations on the
+     * data in the settings file.
+     *
+     * This is done to discover older version of settings files and to make sure values are valid.
+     *
+     * @return true if settings checks out
+     */
     private boolean loadSettings() {
         settings = VerifySettings.readSettings();
 
@@ -55,110 +63,128 @@ public class POS {
         return true;
     }
 
-    private boolean checkDB() {
-        return db.testConnection();
+    /**
+     * Attempts to setup and test the connection to the database.
+     * Default implementation is MySQL.
+     *
+     * @return true if the database connection was successful and tables exist
+     */
+    private boolean initiateDB() {
+        db = new MySQLDBHandler(settings);
+        logger.trace("Database handler created, checking connection ...");
+
+        if (!db.testConnection()) return false;
+
+        logger.trace("Database connection successful.");
+        return true;
     }
 
+    /**
+     * Initiates the UI.
+     * Default is the ConsoleUI.
+     *
+     * @return true if everything loaded correctly
+     */
+    private boolean initiateUI() {
+        int consoleWidth;
+
+        try {
+            consoleWidth = Integer.parseInt(settings.getConsoleWidth());
+        } catch (NumberFormatException e) {
+            logger.error("Setting for console width needs to be an integer.");
+            return false;
+        }
+
+        ui = new ConsoleUI(consoleWidth);
+        ui.showWelcomeMessage();
+        logger.trace("UI started.");
+
+        logger.trace("Started UI with width "+consoleWidth+".");
+        return true;
+    }
+
+    /**
+     * Contains the while loop that keeps the program running.
+     */
     private void start() {
         String input;
 
         while (true) {
             // Attempt to read command.
-            try {
-                if (currentRFID.isEmpty()) {
-                    System.out.println("╠════════════════════════════════════════════════════════════════════" +
-                            "            --------------------------------------------------------------------");
-                    System.out.println("┃ - Input card number or type command. Use /*- for help, "+ EXIT_SIGNAL +" to exit.");
-                }
-                else {
-                    System.out.println("┃ - Input amount to withdraw or deposit (+).");
-                }
-                System.out.print("> ");
-                input = scanner.nextLine();
-            } catch (NoSuchElementException e) {
-                // Occurs when the program is interrupted. Essentially means quit.
-                break;
-            }
+            input = ui.takeInput(currentUser != null);
 
-            List<String> response = handleInput(input);
+            if (input == null) break;
 
-            for (String s : response) {
-                if (s.startsWith("!")) {
-                    resetCurrentInfo();
-                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                    System.out.println(s);
-                    System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                }
-                else {
-                    System.out.println("┃ " + s);
-                }
-            }
-
+            handleInput(input);
         }
 
         exit_application();
-
     }
 
-    private List<String> handleInput(String input) {
-        List<String> response = new ArrayList<>();
-
+    /**
+     * Handles input for the POS.
+     *
+     * @param input
+     */
+    private void handleInput(String input) {
         if (input == null) {
-            return response;
+            return;
         }
 
         switch (input) {
             // If exit signal was input, quit.
-            case EXIT_SIGNAL:
+            case "exit":
                 exit_application();
                 break;
             case "":
                 if (currentRFID.isEmpty()) {
-                    response.add("Not valid input.");
+                    ui.display("Not valid input.");
                 }
                 else {
-                    response.add("Not valid input. Transaction aborted.");
+                    ui.endTransaction("Not valid input. Transaction aborted.");
                 }
                 currentRFID = "";
+                currentUser = null;
                 break;
             default:
                 if (input.startsWith("/")) {
-                    response = handleCommand(input);
+                    handleCommand(input);
                 }
                 else {
-                    response = handleTransactions(input);
+                    handleTransactions(input);
                 }
         }
-
-        return response;
     }
 
-    private List<String> handleCommand(String input) {
-        List<String> response = new ArrayList<>();
-
+    /**
+     * This method should handle commands only.
+     *
+     * @param input
+     */
+    private void handleCommand(String input) {
         switch (input) {
             case "/*-":
-                response.add("Help...");
+                ui.showHelp();
                 break;
             default:
-                response.add("Unrecognized command. Use /*- for help.");
+                ui.display("Unrecognized command. Use /*- for help.");
         }
-
-        return response;
     }
 
-    public List<String> handleTransactions(String input) {
-        List<String> response = new ArrayList<>();
-
+    /**
+     * Any input received in this method will be part of transactions.
+     *
+     * @param input
+     */
+    public void handleTransactions(String input) {
         if (isRFID(input)) {
             if (!currentRFID.isEmpty()) {
                 if (input.equals(currentRFID)) {
-                    response.add(String.format("%s Read again. Ignoring..", currentRFID));
-                    return response;
+                    ui.display(String.format("%s Read again. Ignoring..", currentRFID));
+                    return;
                 }
                 else {
-                    response.add("New RFID registered. Transaction aborted.");
-                    response.add("--------------------------------------------------------------------");
+                    ui.endTransaction("New RFID registered. Transaction aborted.");
                 }
             }
 
@@ -166,26 +192,18 @@ public class POS {
             try {
                 currentUser = db.get_or_create(currentRFID);
             } catch (SQLException e) {
-                response.add("! SQL error occurred while trying to retrieve user from the database. Check your connection.");
-                return response;
+                ui.error("SQL error occurred while trying to retrieve user from the database. Check your connection.");
+                return;
             }
 
             if (currentUser != null) {
-                response.add("");
-                response.add("    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
-                response.add("    ┃ Read RFID " + currentRFID);
-                response.add("    ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫");
-                response.add(String.format("    ┃ Last used: %s", currentUser.getLastUsed()));
-                response.add(String.format("    ┃ Balance: %d", currentUser.getCredit()));
-                response.add("    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛");
-                response.add("    ┗-------------------------------------");
-                response.add("");
+                ui.rfidRead(currentUser);
             }
         }
         else {
             if (currentUser == null) {
-                response.add("No RFID registered. Transaction aborted.");
-                return response;
+                ui.endTransaction("No RFID registered. Transaction aborted.");
+                return;
             }
 
             // At this point we assume the transaction is to deposit or deduct money.
@@ -204,39 +222,35 @@ public class POS {
                     try {
                         db.deposit(currentRFID, amount);
                     } catch (SQLException e) {
-                        response.add("! SQL error occurred while attempting to make deposit. Transaction aborted.");
-                        return response;
+                        ui.error("SQL error occurred while attempting to make deposit. Transaction aborted.");
+                        return;
                     }
 
                     new_balance = currentUser.getCredit() + amount;
-                    response.add("");
-                    response.add(String.format("Deposited %d into RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
-                    response.add("");
+                    ui.endTransaction(String.format("Deposited %d into RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
                 }
                 else {
                     if (amount > currentUser.getCredit()) {
-                        response.add("! The balance on this card isn't high enough for that purchase.");
-                        return response;
+                        ui.error("The balance on this card isn't high enough for that purchase.");
+                        return;
                     }
                     else {
                         try {
                             db.deduct(currentRFID, amount);
                         } catch (SQLException e) {
-                            response.add("! SQL error occurred while trying to withdraw money from this account. Transaction aborted.");
-                            return response;
+                            ui.error("SQL error occurred while trying to withdraw money from this account. Transaction aborted.");
+                            return;
                         }
                         new_balance = currentUser.getCredit() - amount;
-                        response.add("");
-                        response.add(String.format("Withdrew %d from RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
-                        response.add("");
+                        ui.endTransaction(String.format("Withdrew %d from RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
                     }
                 }
 
                 try {
                     db.transaction(currentUser.getId(), amount, is_deposit, new_balance);
                 } catch (SQLException e) {
-                    response.add("! SQL error occurred while trying to store log this transaction. The money has been deposited.");
-                    return response;
+                    ui.error("SQL error occurred while trying to store log this transaction. The money has been deposited.");
+                    return;
                 }
 
                 resetCurrentInfo();
@@ -244,27 +258,22 @@ public class POS {
                 logger.error("Not a number.");
             }
         }
-
-        return response;
     }
 
+    /**
+     * Exists the application with logging trigger.
+     */
     private void exit_application() {
         logger.trace("Exited RFID POS application.");
         System.exit(0);
     }
 
+    /**
+     * Just wipes all stored information for current transactions.
+     */
     private void resetCurrentInfo() {
         currentRFID = "";
         currentUser = null;
-    }
-
-    private List<String> drawBow(List<String> lines) {
-        List<String> boxedLines = new ArrayList<>();
-
-        boxedLines.add("");
-
-
-        return lines;
     }
 
     /**
