@@ -45,6 +45,10 @@ public class Settings {
         return dbPort;
     }
 
+    public String getConsoleWidth() throws NumberFormatException {
+        return consoleWidth;
+    }
+
     public boolean cleanOptionalFields() {
         boolean change = false;
 
@@ -58,9 +62,5 @@ public class Settings {
         }
 
         return change;
-    }
-
-    public String getConsoleWidth() throws NumberFormatException {
-        return consoleWidth;
     }
 }
