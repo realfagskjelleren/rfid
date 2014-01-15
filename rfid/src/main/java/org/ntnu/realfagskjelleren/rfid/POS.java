@@ -12,8 +12,6 @@ import org.ntnu.realfagskjelleren.rfid.ui.consoleimpl.ConsoleUI;
 import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This POS system is made to work with an RFID scanner and numeric pad.
@@ -197,12 +195,12 @@ public class POS {
             }
 
             if (currentUser != null) {
-                ui.rfidRead(currentUser);
+                ui.startTransaction(currentUser);
             }
         }
         else {
             if (currentUser == null) {
-                ui.endTransaction("No RFID registered. Transaction aborted.");
+                ui.display("No transaction. Not a valid command.");
                 return;
             }
 
