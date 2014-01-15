@@ -19,13 +19,12 @@ public interface UI {
 
     public String takeInput(boolean has_user);
 
-    public void rfidRead(User user);
-
     public void display(String output);
     public void display(List<String> output);
-    public void endTransaction(String output);
-    public void endTransaction(List<String> output);
     public void error(String error);
     public void error(List<String> error);
+    public void startTransaction(User user);
+    public void endTransaction(String output);
+    public void endTransaction(List<String> output);
 
 }
