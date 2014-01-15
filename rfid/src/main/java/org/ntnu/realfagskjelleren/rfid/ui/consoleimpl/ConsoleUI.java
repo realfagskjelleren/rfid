@@ -19,6 +19,7 @@ public class ConsoleUI implements UI {
                                                          // 0    1    2    3    4    5    6    7    8    9    10   11   12   13   14
     private final char[] boxDrawingCharacters = new char[]{'═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬', '─', '╟', '╢', '╫'};
     private final int consoleWidth;
+    private boolean active_transaction = false;
 
     public ConsoleUI(int consoleWidth) {
         this.consoleWidth = consoleWidth;
@@ -27,15 +28,32 @@ public class ConsoleUI implements UI {
     @Override
     public void showWelcomeMessage() {
         frameTop();
-        printCenterAligned(Arrays.asList(
-                "    ____  ______________ ",
-                "   / __ \\/ ____/  _/ __ \\",
-                "  / /_/ / /_   / // / / /",
-                " / _, _/ __/ _/ // /_/ / ",
-                "/_/ |_/_/   /___/_____/  ",
-                "                         ",
-                "  by realfagskjelleren   "
-        ));
+        if (consoleWidth < 60) {
+            printCenterAligned(Arrays.asList(
+                    "    ____  ______________ ",
+                    "   / __ \\/ ____/  _/ __ \\",
+                    "  / /_/ / /_   / // / / /",
+                    " / _, _/ __/ _/ // /_/ / ",
+                    "/_/ |_/_/   /___/_____/  ",
+                    "                         "
+            ));
+        }
+        else {
+            printCenterAligned(Arrays.asList(
+                    "      ___           ___                       ___     ",
+                    "     /\\  \\         /\\  \\          ___        /\\  \\    ",
+                    "    /::\\  \\       /::\\  \\        /\\  \\      /::\\  \\   ",
+                    "   /:/\\:\\  \\     /:/\\:\\  \\       \\:\\  \\    /:/\\:\\  \\  ",
+                    "  /::\\~\\:\\  \\   /::\\~\\:\\  \\      /::\\__\\  /:/  \\:\\__\\ ",
+                    " /:/\\:\\ \\:\\__\\ /:/\\:\\ \\:\\__\\  __/:/\\/__/ /:/__/ \\:|__|",
+                    " \\/_|::\\/:/  / \\/__\\:\\ \\/__/ /\\/:/  /    \\:\\  \\ /:/  /",
+                    "    |:|::/  /       \\:\\__\\   \\::/__/      \\:\\  /:/  / ",
+                    "    |:|\\/__/         \\/__/    \\:\\__\\       \\:\\/:/  /  ",
+                    "    |:|  |                     \\/__/        \\::/__/   ",
+                    "     \\|__|                                   ~~       "
+            ));
+        }
+        printCenterAligned(Arrays.asList("by realfagskjelleren"));
         frameEmpty();
         frameBottom();
     }
@@ -49,11 +67,10 @@ public class ConsoleUI implements UI {
     public String takeInput(boolean has_user) {
         try {
             if (!has_user) {
-                frameTop();
-                print("- Input card number or type command. Use /*- for help.");
+                display("- Input card number or type command. Use /*- for help.");
             }
             else {
-                print("- Input amount to withdraw or deposit (+).");
+                display("- Input amount to withdraw or deposit (+).");
             }
             System.out.print("> ");
             String input = scanner.nextLine();
@@ -66,7 +83,30 @@ public class ConsoleUI implements UI {
     }
 
     @Override
-    public void rfidRead(User user) {
+    public void display(String output) {
+        display(Arrays.asList(output));
+    }
+
+    @Override
+    public void display(List<String> output) {
+        if (active_transaction) {
+            frameEmpty();
+            printLeftAligned(output);
+            //frameEmpty();
+        }
+        else {
+            print("");
+            print(output);
+            //print("");
+        }
+
+    }
+
+    @Override
+    public void startTransaction(User user) {
+        active_transaction = true;
+        frameTop();
+
         List<String> response = Arrays.asList(
                 "RFID: " + user.getRfid(),
                 "---",
@@ -74,21 +114,7 @@ public class ConsoleUI implements UI {
                 "Balance: " + user.getCredit()
         );
 
-        frameEmpty();
-        print(table(response));
-        frameEmpty();
-    }
-
-    @Override
-    public void display(String output) {
-        display(Arrays.asList(output));
-    }
-
-        @Override
-    public void display(List<String> output) {
-        frameEmpty();
-        print(output);
-        frameEmpty();
+        display(table(response));
     }
 
     @Override
@@ -100,13 +126,14 @@ public class ConsoleUI implements UI {
     public void endTransaction(List<String> output) {
         display(output);
         frameBottom();
+        active_transaction = false;
     }
 
     @Override
     public void error(String error) {
-        print(StringUtils.repeat("!", consoleWidth - 4));
-        print(StringUtils.center(error, consoleWidth - 4));
-        print(StringUtils.repeat("!", consoleWidth - 4));
+        printLeftAligned(StringUtils.repeat("!", consoleWidth - 4));
+        printLeftAligned(StringUtils.center(error, consoleWidth - 4));
+        printLeftAligned(StringUtils.repeat("!", consoleWidth - 4));
     }
 
     @Override
@@ -115,34 +142,58 @@ public class ConsoleUI implements UI {
     }
 
     /*
-        Some methods to sort out the printing of console specific separation and such
+        Printing
      */
+
+    /**
+     * Regular print medthos. No borders.
+     * This method is used in order to simplify changing the ui at a later
+     * point, rather than statically using System.out.println.
+     *
+     * @param line Line to be printed
+     */
+    private void print(String line) {
+        System.out.println(line);;
+    }
+
+    /**
+     * Just a printing call with more than one line.
+     *
+     * @param lines Lines to be printed.
+     */
+    private void print(List<String> lines) {
+        for (String line : lines) {
+            print(line);
+        }
+    }
+
+    /* Some methods to sort out the printing of transaction specific separation */
 
     /* Frame parts - frame meaning the full consoleWidth frame */
 
     /**
-     * Inserts a line into the console that is the top of a square frame.
+     * Inserts a line into the transactionthat is the top of a square frame.
      */
     private void frameTop() {
         System.out.println(boxDrawingCharacters[2] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[3]);
     }
 
     /**
-     * Inserts a line into the console that is the bottom of a square frame.
+     * Inserts a line into the transactionthat is the bottom of a square frame.
      */
     private void frameBottom() {
         System.out.println(boxDrawingCharacters[4] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[5]);
     }
 
     /**
-     * Inserts a line into the console with vertical borders and a horizontal double line.
+     * Inserts a line into the transactionwith vertical borders and a horizontal double line.
      */
     private void frameMiddle() {
         System.out.println(boxDrawingCharacters[6] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[7]);
     }
 
     /**
-     * Inserts a line into the console with only vertical borders on either side and no content.
+     * Inserts a line into the transactionwith only vertical borders on either side and no content.
      */
     private void frameEmpty() {
         System.out.println(boxDrawingCharacters[1] + StringUtils.repeat(" ", consoleWidth-2) + boxDrawingCharacters[1]);
@@ -151,29 +202,42 @@ public class ConsoleUI implements UI {
     /* General printing methods */
 
     /**
-     * Alias for print with just one string.
+     * Prints a line with normal left alignment.
+     * This includes frame borders and is meant for transactions.
      *
      * @param line Line to be printed
      */
-    private void print(String line) {
-        print(Arrays.asList(line));
+    private void printLeftAligned(String line) {
+        System.out.println(leftAlign(line));
     }
 
     /**
-     * Will print a list of strings with normal left alignment.
+     * Alias for printing with left alignment that takes a list.
+     * This includes frame borders and is meant for transactions.
      *
      * @param lines Lines to be printed
      */
-    private void print(List<String> lines) {
+    private void printLeftAligned(List<String> lines) {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            System.out.println(leftAlign(line));
+            printLeftAligned(line);
         }
     }
 
     /**
-     * Will print a list of strings aligned to the right of the console.
+     * Prints a line with right alignment.
+     * This includes frame borders and is meant for transactions.
+     *
+     * @param line Line to be printed
+     */
+    private void printRightAligned(String line) {
+        System.out.println(rightAlign(line));
+    }
+
+    /**
+     * Alias for printing with right alignment that takes a list.
+     * This includes frame borders and is meant for transactions.
      *
      * @param lines Lines to be printed
      */
@@ -181,12 +245,23 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            System.out.println(rightAlign(line));
+            printRightAligned(line);
         }
     }
 
     /**
-     * Will print a list of strings to the center of the console.
+     * Prints a line with center alignment.
+     * This includes frame borders and is meant for transactions.
+     *
+     * @param line Line to be printed
+     */
+    public void printCenterAligned(String line) {
+            System.out.println(center(line));
+    }
+
+    /**
+     * Alias for printing with center alignment that takes a list.
+     * This includes frame borders and is meant for transactions.
      *
      * @param lines Lines to be printed
      */
@@ -194,7 +269,7 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            System.out.println(center(line));
+            printCenterAligned(line);
         }
     }
 
@@ -303,27 +378,32 @@ public class ConsoleUI implements UI {
         }
 
         String tableTop = ""+boxDrawingCharacters[2];
-        String tableMiddle = ""+boxDrawingCharacters[12];
+        String tableMiddleSingle = ""+boxDrawingCharacters[12];
+        String tableMiddleDouble = ""+boxDrawingCharacters[6];
         String tableBottom = ""+boxDrawingCharacters[4];
 
         for (int i=0; i < maxLengths.length; i++) {
             int colWidth = maxLengths[i];
-            // |%1$-10s|%2$-10s|%3$-20s|\n
             rowFormat += " %"+(i+1)+"$-"+colWidth+"s "+ boxDrawingCharacters[1];
 
             tableTop += StringUtils.repeat(boxDrawingCharacters[0], colWidth + 2) + boxDrawingCharacters[8];
-            tableMiddle += StringUtils.repeat(boxDrawingCharacters[11], colWidth + 2) + boxDrawingCharacters[14];
+            tableMiddleSingle += StringUtils.repeat(boxDrawingCharacters[11], colWidth + 2) + boxDrawingCharacters[14];
+            tableMiddleDouble += StringUtils.repeat(boxDrawingCharacters[0], colWidth + 2) + boxDrawingCharacters[10];
             tableBottom += StringUtils.repeat(boxDrawingCharacters[0], colWidth + 2) + boxDrawingCharacters[9];
         }
 
         tableTop = tableTop.substring(0, tableTop.length()-1) + boxDrawingCharacters[3];
-        tableMiddle = tableMiddle.substring(0, tableMiddle.length()-1) + boxDrawingCharacters[13];
+        tableMiddleSingle = tableMiddleSingle.substring(0, tableMiddleSingle.length()-1) + boxDrawingCharacters[13];
+        tableMiddleDouble = tableMiddleDouble.substring(0, tableMiddleDouble.length()-1) + boxDrawingCharacters[7];
         tableBottom = tableBottom.substring(0, tableBottom.length()-1) + boxDrawingCharacters[5];
 
         table.add(tableTop);
         for (String[] row : data) {
             if (row[0].equals("---")) {
-                table.add(tableMiddle);
+                table.add(tableMiddleSingle);
+            }
+            else if (row[0].equals("===")) {
+                table.add(tableMiddleDouble);
             }
             else {
                 if (row.length < mostCells) {
