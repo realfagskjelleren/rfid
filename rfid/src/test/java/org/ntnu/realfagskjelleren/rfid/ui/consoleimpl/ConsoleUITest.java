@@ -99,14 +99,27 @@ public class ConsoleUITest {
 
         List<String> data = Arrays.asList(
                 "Thead1 | Thead2 | Thead",
-                "---",
+                "===",
                 "Tdata1.1 | Tdatfdsaa2.1 | Tdataaa3.1",
                 "Tdata1.2 | Tdataa2.2 | Tdataaa3.2|3",
                 "Tda    a1.3 |  | Tdafgrtaaa3.3|4dsa",
                 "---",
                 "a|b|c|d"
         );
+        List<String> desiredResult = Arrays.asList(
+                "╔═════════════╦══════════════╦═══════════════╦══════╗" +
+                "║ Thead1      ║ Thead2       ║ Thead         ║      ║",
+                "╠═════════════╬══════════════╬═══════════════╬══════╣",
+                "║ Tdata1.1    ║ Tdatfdsaa2.1 ║ Tdataaa3.1    ║      ║",
+                "║ Tdata1.2    ║ Tdataa2.2    ║ Tdataaa3.2    ║ 3    ║",
+                "║ Tda    a1.3 ║              ║ Tdafgrtaaa3.3 ║ 4dsa ║",
+                "╟─────────────╫──────────────╫───────────────╫──────╢",
+                "║ a           ║ b            ║ c             ║ d    ║",
+                "╚═════════════╩══════════════╩═══════════════╩══════╝"
+        );
 
-
+//        for (String line : ui.table(data)) {
+//            System.out.println(line);
+//        }
     }
 }
