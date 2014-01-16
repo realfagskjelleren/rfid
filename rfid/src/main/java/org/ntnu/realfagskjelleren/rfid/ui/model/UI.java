@@ -1,5 +1,6 @@
 package org.ntnu.realfagskjelleren.rfid.ui.model;
 
+import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
 
 import java.util.List;
@@ -22,9 +23,12 @@ public interface UI {
     public void display(String output);
     public void display(List<String> output);
     public void error(String error);
-    public void error(List<String> error);
+    public void error(List<String> errors);
     public void startTransaction(User user);
     public void endTransaction(String output);
     public void endTransaction(List<String> output);
+
+    public void showTransactions(List<Transaction> transactions);
+
 
 }
