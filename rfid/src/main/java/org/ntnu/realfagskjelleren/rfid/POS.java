@@ -171,7 +171,7 @@ public class POS {
                         ui.showTransactions(db.getTransactions(10));
                     }
                     else {
-                        ui.showTransactions(db.getTransactions(currentUser, 10));
+                        ui.showTransactions(db.getTransactions(currentUser.getId(), 10));
                     }
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to retrieve transactions from the database. Check your connection.");
