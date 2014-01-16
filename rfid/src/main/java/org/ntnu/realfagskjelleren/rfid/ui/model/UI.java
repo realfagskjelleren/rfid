@@ -18,7 +18,7 @@ public interface UI {
     public void showWelcomeMessage();
     public void showHelp();
 
-    public String takeInput(boolean has_user);
+    public String takeInput();
 
     public void display(String output);
     public void display(List<String> output);

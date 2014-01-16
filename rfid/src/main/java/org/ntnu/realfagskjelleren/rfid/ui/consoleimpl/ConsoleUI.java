@@ -65,13 +65,13 @@ public class ConsoleUI implements UI {
     }
 
     @Override
-    public String takeInput(boolean has_user) {
+    public String takeInput() {
         try {
-            if (!has_user) {
-                display("- Input card number or type command. Use /*- for help.");
+            if (active_transaction) {
+                display("- Input amount to withdraw or deposit (+).");
             }
             else {
-                display("- Input amount to withdraw or deposit (+).");
+                display("- Input card number or type command. Use /*- for help.");
             }
             System.out.print("> ");
             String input = scanner.nextLine();

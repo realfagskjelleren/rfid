@@ -109,7 +109,7 @@ public class POS {
 
         while (true) {
             // Attempt to read command.
-            input = ui.takeInput(currentUser != null);
+            input = ui.takeInput();
 
             if (input == null) break;
 
