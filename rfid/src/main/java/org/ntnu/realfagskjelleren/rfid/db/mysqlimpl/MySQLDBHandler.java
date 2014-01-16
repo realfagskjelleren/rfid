@@ -226,6 +226,14 @@ public class MySQLDBHandler implements DBHandler {
         return null;
     }
 
+    /**
+     * This will override the RFID registered on a user. Meant to be used when users
+     * have ro recover their account by ECC, or if they have both cards and wish to switch.
+     *
+     * @param user_id
+     * @param rfid
+     * @throws SQLException
+     */
     @Override
     public void update_user_rfid(int user_id, String rfid) throws SQLException {
         try (Connection con = getConnection();
@@ -298,6 +306,13 @@ public class MySQLDBHandler implements DBHandler {
         return true;
     }
 
+    /**
+     * Deposits money into a user's account.
+     *
+     * @param rfid RFID of the user
+     * @param value value to be inserted
+     * @throws SQLException
+     */
     @Override
     public void deposit(String rfid, int value) throws SQLException {
         try (Connection con = getConnection();
@@ -314,6 +329,13 @@ public class MySQLDBHandler implements DBHandler {
         }
     }
 
+    /**
+     * Deducts money from a user's account. This means withdrawing.
+     *
+     * @param rfid RFID of the user
+     * @param value value to be deducted
+     * @throws SQLException
+     */
     @Override
     public void deduct(String rfid, int value) throws SQLException {
         try (Connection con = getConnection();
@@ -378,19 +400,19 @@ public class MySQLDBHandler implements DBHandler {
     /**
      * Fetches the last 'amount' transactions from the database which matches the supplied user.
      *
-     * @param user The user to lookup
+     * @param user_id ID of the user to filter on
      * @param amount The amount fo transactions to return
      * @return List of Transaction objects
      * @throws SQLException
      */
     @Override
-    public List<Transaction> getTransactions(User user, int amount) throws SQLException {
+    public List<Transaction> getTransactions(int user_id, int amount) throws SQLException {
         List <Transaction> transactions = new ArrayList<>();
 
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_BY_USER_QS)) {
 
-            ps.setInt(1, user.getId());
+            ps.setInt(1, user_id);
             ps.setInt(2, amount);
 
             try (ResultSet rs = ps.executeQuery()) {
