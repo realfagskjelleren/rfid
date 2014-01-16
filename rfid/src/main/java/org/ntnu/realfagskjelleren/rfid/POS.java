@@ -4,6 +4,7 @@ package org.ntnu.realfagskjelleren.rfid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
+import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
@@ -163,6 +164,19 @@ public class POS {
         switch (input) {
             case "/*-":
                 ui.showHelp();
+                break;
+            case "/1":
+                try {
+                    if (currentUser == null) {
+                        ui.showTransactions(db.getTransactions(10));
+                    }
+                    else {
+                        ui.showTransactions(db.getTransactions(currentUser, 10));
+                    }
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to retrieve transactions from the database. Check your connection.");
+                    return;
+                }
                 break;
             default:
                 ui.display("Unrecognized command. Use /*- for help.");
