@@ -10,6 +10,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Implementation of UI via the console or terminal. The implementation is made to work with only a numpad.
+ *
  * @author Håvard Slettvold
  */
 public class ConsoleUI implements UI {

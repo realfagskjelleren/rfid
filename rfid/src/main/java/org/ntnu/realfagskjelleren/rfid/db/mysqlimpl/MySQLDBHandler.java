@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
+ * Implementation of DBHandler for MySQL.
+ *
  * @author Håvard Slettvold
  */
 public class MySQLDBHandler implements DBHandler {

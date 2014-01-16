@@ -17,6 +17,12 @@ import java.sql.SQLException;
  * This POS system is made to work with an RFID scanner and numeric pad.
  * Any additional keyboard is not necessary.
  *
+ * Other forms of UI, like swing (god forbid), can be implemented via the UI interface.
+ * Some tinkering may be needed to allow settings to choose which for m of UI is wanted.
+ *
+ * Other database solutions may be implemented via the DBHandler interface.
+ * As with the UI, some tinkering is needed to make that work dynamically.
+ *
  * @author Håvard Slettvold
  */
 public class POS {
