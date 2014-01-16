@@ -8,9 +8,9 @@ import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 /**
  * @author Håvard Slettvold
@@ -26,15 +26,16 @@ public class MySQLDBHandler implements DBHandler {
     // Query Strings
     private final String CREATE_USER_QS = "INSERT INTO user (credit, rfid, ecc, is_staff, created) VALUES (0, ?, ?, 0, NOW());";
     private final String UPDATE_USER_RFID_QS = "UPDATE user SET rfid = ? WHERE id = ?";
-    private final String GET_USER_RFID_QS = "SELECT * FROM user WHERE rfid = ?;";
-    private final String GET_USER_ECC_QS = "SELECT * FROM user WHERE ecc = ?;";
+    private final String GET_USER_BY_RFID_QS = "SELECT * FROM user WHERE rfid = ?;";
+    private final String GET_USER_BY_ECC_QS = "SELECT * FROM user WHERE ecc = ?;";
     private final String EXISTS_RFID_QS = "SELECT COUNT(*) FROM user WHERE rfid = ?;";
     private final String EXISTS_ECC_QS = "SELECT COUNT(*) FROM user WHERE ecc = ?;";
 
     private final String DEPOSIT_QS = "UPDATE user SET credit = credit+? WHERE rfid = ?;";
     private final String DEDUCT_QS = "UPDATE user SET credit = credit-? WHERE rfid = ?;";
 
-    private final String GET_TRANSACTIONS_QS = "SELECT * FROM transaction ORDER BY rowid DESC LIMIT ?;";
+    private final String GET_TRANSACTIONS_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id ORDER BY t.id DESC LIMIT ?;";
+    private final String GET_TRANSACTIONS_BY_USER_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id WHERE u.id = ? ORDER BY t.id DESC LIMIT ?;";
     private final String GET_ALL_USERS_QS = "SELECT * FROM user;";
 
     private final String TRANSACTION_QS = "INSERT INTO transaction (user_id, value, is_deposit, new_balance) VALUES (?, ?, ?, ?);";
@@ -170,7 +171,7 @@ public class MySQLDBHandler implements DBHandler {
                 }
             }
 
-            try (PreparedStatement ps = con.prepareStatement(GET_USER_RFID_QS)) {
+            try (PreparedStatement ps = con.prepareStatement(GET_USER_BY_RFID_QS)) {
                 ps.setString(1, rfid);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -200,13 +201,19 @@ public class MySQLDBHandler implements DBHandler {
     @Override
     public User get_user(int ecc) throws SQLException {
         try (Connection con = getConnection();
-             PreparedStatement ps = con.prepareStatement(GET_USER_ECC_QS)) {
+             PreparedStatement ps = con.prepareStatement(GET_USER_BY_ECC_QS)) {
 
             ps.setInt(1, ecc);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    User user = new User(rs.getInt("id"), rs.getString("rfid"), rs.getBoolean("is_staff"), rs.getInt("credit"), rs.getTimestamp("last_used"));
+                    User user = new User(
+                            rs.getInt("id"),
+                            rs.getString("rfid"),
+                            rs.getBoolean("is_staff"),
+                            rs.getInt("credit"),
+                            rs.getTimestamp("last_used")
+                    );
                     return user;
                 }
             }
@@ -328,9 +335,86 @@ public class MySQLDBHandler implements DBHandler {
         return null;
     }
 
+    /**
+     * Fetches the last 'amount' transactions from the database.
+     *
+     * @param amount The amount fo transactions to return
+     * @return List of Transaction objects
+     * @throws SQLException
+     */
     @Override
-    public List<Transaction> getTransactions(int... amount) throws SQLException {
-        return null;
+    public List<Transaction> getTransactions(int amount) throws SQLException {
+        List <Transaction> transactions = new ArrayList<>();
+
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_QS)) {
+
+            ps.setInt(1, amount);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Transaction tr = new Transaction(
+                            rs.getInt("user_id"),
+                            rs.getString("rfid"),
+                            rs.getInt("value"),
+                            rs.getInt("new_balance"),
+                            rs.getBoolean("is_deposit"),
+                            rs.getTimestamp("date")
+                    );
+                    transactions.add(tr);
+                }
+            }
+
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not retrieve transactions."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return transactions;
+    }
+
+    /**
+     * Fetches the last 'amount' transactions from the database which matches the supplied user.
+     *
+     * @param user The user to lookup
+     * @param amount The amount fo transactions to return
+     * @return List of Transaction objects
+     * @throws SQLException
+     */
+    @Override
+    public List<Transaction> getTransactions(User user, int amount) throws SQLException {
+        List <Transaction> transactions = new ArrayList<>();
+
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_BY_USER_QS)) {
+
+            ps.setInt(1, user.getId());
+            ps.setInt(2, amount);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Transaction tr = new Transaction(
+                            rs.getInt("user_id"),
+                            rs.getString("rfid"),
+                            rs.getInt("value"),
+                            rs.getInt("new_balance"),
+                            rs.getBoolean("is_deposit"),
+                            rs.getTimestamp("date")
+                    );
+                    transactions.add(tr);
+                }
+            }
+
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not retrieve transactions."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return transactions;
     }
 
     /**
