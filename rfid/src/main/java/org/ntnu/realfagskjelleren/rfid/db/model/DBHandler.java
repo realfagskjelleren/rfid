@@ -21,7 +21,8 @@ public interface DBHandler {
     public void deduct(String rfid, int value) throws SQLException;
 
     public List<User> getAllUsers() throws SQLException;
-    public List<Transaction> getTransactions(int... amount) throws SQLException;
+    public List<Transaction> getTransactions(int amount) throws SQLException;
+    public List<Transaction> getTransactions(User user, int amount) throws SQLException;
 
     public void transaction(int user_id, int value, boolean is_deposit, int new_balance) throws SQLException;
     public void log(String message) throws SQLException;
