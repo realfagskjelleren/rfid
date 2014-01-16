@@ -80,8 +80,6 @@ public class MySQLDBHandler implements DBHandler {
             }
         }
 
-        createDatabase();
-
         return success;
     }
 

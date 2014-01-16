@@ -73,6 +73,9 @@ public class POS {
 
         if (!db.testConnection()) return false;
 
+        // Attempt to create DB. The DBHandler should evaluate whether or not to do this.
+        if (!db.createDatabase()) return false;
+
         logger.trace("Database connection successful.");
         return true;
     }
