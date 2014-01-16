@@ -1,6 +1,7 @@
 package org.ntnu.realfagskjelleren.rfid.ui.consoleimpl;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
@@ -131,14 +132,46 @@ public class ConsoleUI implements UI {
 
     @Override
     public void error(String error) {
-        printLeftAligned(StringUtils.repeat("!", consoleWidth - 4));
-        printLeftAligned(StringUtils.center(error, consoleWidth - 4));
-        printLeftAligned(StringUtils.repeat("!", consoleWidth - 4));
+        display(Arrays.asList(
+                StringUtils.repeat("!", consoleWidth - 4),
+                StringUtils.center(error, consoleWidth - 4),
+                StringUtils.repeat("!", consoleWidth - 4)
+        ));
     }
 
     @Override
-    public void error(List<String> error) {
+    public void error(List<String> errors) {
+        for (String error : errors) {
 
+        }
+    }
+
+    @Override
+    public void showTransactions(List<Transaction> transactions) {
+        List<String> tableData = new ArrayList<>();
+
+        String rowFormat = "%s|%s|%s|%s";
+        String tableHeader = "RFID | Amount | New balance | Date";
+
+        // Generate table
+        tableData.add(tableHeader);
+        tableData.add("===");
+        for (int i=0; i < transactions.size(); i++) {
+            if (i != 0 && i % 5 == 0) {
+                tableData.add("---");
+            }
+            Transaction t = transactions.get(i);
+            String sign = t.isDeposit() ? "+" : "-";
+            tableData.add(String.format(
+                    rowFormat,
+                    t.getRfid(),
+                    sign + t.getValue(),
+                    t.getNew_balance(),
+                    t.getDate()
+            ));
+        }
+
+        display(table(tableData));
     }
 
     /*
@@ -202,17 +235,17 @@ public class ConsoleUI implements UI {
     /* General printing methods */
 
     /**
-     * Prints a line with normal left alignment.
+     * Alias for printing with left alignment that takes a single String.
      * This includes frame borders and is meant for transactions.
      *
      * @param line Line to be printed
      */
     private void printLeftAligned(String line) {
-        System.out.println(leftAlign(line));
+        printLeftAligned(Arrays.asList(line));
     }
 
     /**
-     * Alias for printing with left alignment that takes a list.
+     * Prints lines with normal left alignment.
      * This includes frame borders and is meant for transactions.
      *
      * @param lines Lines to be printed
@@ -221,22 +254,22 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            printLeftAligned(line);
+            System.out.println(leftAlign(line));
         }
     }
 
     /**
-     * Prints a line with right alignment.
+     * Alias for printing with right alignment that takes a single String.
      * This includes frame borders and is meant for transactions.
      *
      * @param line Line to be printed
      */
     private void printRightAligned(String line) {
-        System.out.println(rightAlign(line));
+        printRightAligned(Arrays.asList(line));
     }
 
     /**
-     * Alias for printing with right alignment that takes a list.
+     * Prints lines with right alignment.
      * This includes frame borders and is meant for transactions.
      *
      * @param lines Lines to be printed
@@ -245,22 +278,22 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            printRightAligned(line);
+            System.out.println(rightAlign(line));
         }
     }
 
     /**
-     * Prints a line with center alignment.
+     * Alias for printing with center alignment that takes a single String.
      * This includes frame borders and is meant for transactions.
      *
      * @param line Line to be printed
      */
     public void printCenterAligned(String line) {
-            System.out.println(center(line));
+            printCenterAligned(Arrays.asList(line));
     }
 
     /**
-     * Alias for printing with center alignment that takes a list.
+     * Prints lines with center alignment.
      * This includes frame borders and is meant for transactions.
      *
      * @param lines Lines to be printed
@@ -269,7 +302,7 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            printCenterAligned(line);
+            System.out.println(center(line));
         }
     }
 
