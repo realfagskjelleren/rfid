@@ -76,6 +76,8 @@ public class ConsoleUI implements UI {
             System.out.print("> ");
             String input = scanner.nextLine();
 
+            if (input.equals(EXIT_SIGNAL)) return "exit";
+
             return input;
         } catch (NoSuchElementException e) {
             // Occurs when the program is interrupted. Essentially means quit. Returning null will exit.
