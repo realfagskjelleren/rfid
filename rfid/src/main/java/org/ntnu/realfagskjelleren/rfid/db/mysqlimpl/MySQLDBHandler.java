@@ -348,7 +348,31 @@ public class MySQLDBHandler implements DBHandler {
 
     @Override
     public List<User> getAllUsers() throws SQLException {
-        return null;
+        List<User> users = new ArrayList<>();
+
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(GET_ALL_USERS_QS)) {
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User(
+                            rs.getInt("id"),
+                            rs.getString("rfid"),
+                            rs.getBoolean("is_staff"),
+                            rs.getInt("credit"),
+                            rs.getTimestamp("last_used")
+                    );
+                    users.add(user);
+                }
+            }
+
+        } catch (SQLException ex) {
+            logger.error("Failed to retrieve all users.");
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return users;
     }
 
     /**
