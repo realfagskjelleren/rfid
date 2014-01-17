@@ -10,6 +10,8 @@ public interface DBHandler {
 
     public boolean testConnection();
     public boolean createDatabase();
+    public Version getVersion();
+    public boolean setVersion(String version);
 
     public User get_or_create(String rfid) throws SQLException;
     public User get_user(int ecc) throws SQLException;

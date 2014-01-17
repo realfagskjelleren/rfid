@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
 import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
+import org.ntnu.realfagskjelleren.rfid.db.model.Version;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 
 import java.sql.*;
@@ -22,8 +23,6 @@ public class MySQLDBHandler implements DBHandler {
     private static Logger logger = LogManager.getLogger(MySQLDBHandler.class.getName());
 
     private Settings settings;
-
-    private final String RFID_DATABASE_VERSION = "2.0";
 
     private final String LOG_QS = "INSERT INTO log (message, date) VALUES (?, datetime('now'));";
 
@@ -128,6 +127,59 @@ public class MySQLDBHandler implements DBHandler {
         return success;
     }
 
+    /**
+     * Finds the current version from the database.
+     *
+     * @return Version object with information about version of the database
+     */
+    @Override
+    public Version getVersion() {
+        String GET_VERSION_QS = "SELECT * FROM `version` ORDER BY id DESC LIMIT 1;";
+        try (Connection con = getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(GET_VERSION_QS)){
+
+            if (rs.next()) {
+                return new Version(rs.getString("version"), rs.getTimestamp("executed_on"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * Inserts a version entry into the database.
+     *
+     * @param version Version to be set
+     * @return True if version was set
+     */
+    @Override
+    public boolean setVersion(String version) {
+        String SET_VERSION_QS = "INSERT INTO version (version) VALUES (?);";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(SET_VERSION_QS)) {
+
+            ps.setString(1, version);
+            ps.executeUpdate();
+
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Makes a connection to the database.
+     *
+     * @return Connection to the database
+     * @throws SQLException
+     */
     private Connection getConnection() throws SQLException {
         String url = String.format("jdbc:mysql://%s:%s/%s", settings.getDbHost(), settings.getDbPort(), settings.getDbName());
         return DriverManager.getConnection(url, settings.getDbUsername(), settings.getDbPassword());

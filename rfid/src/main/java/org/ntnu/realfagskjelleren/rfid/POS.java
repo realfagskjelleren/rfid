@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
+import org.ntnu.realfagskjelleren.rfid.db.model.Version;
 import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 import org.ntnu.realfagskjelleren.rfid.settings.VerifySettings;
@@ -28,6 +29,8 @@ import java.sql.SQLException;
 public class POS {
 
     private static Logger logger = LogManager.getLogger(POS.class.getName());
+
+    private final String RFID_DATABASE_VERSION = "2.0";
 
     private Settings settings;
     private DBHandler db;
@@ -82,6 +85,25 @@ public class POS {
         // Attempt to create DB. The DBHandler should evaluate whether or not to do this.
         if (!db.createDatabase()) return false;
 
+        Version version = db.getVersion();
+        if (version == null) {
+            // If version is null, the table was newly created and there is no version yet.
+            if (!db.setVersion(RFID_DATABASE_VERSION)) return false;
+            logger.debug("Detected new database. Database version set to '"+ RFID_DATABASE_VERSION +"'.");
+        }
+        else if (!RFID_DATABASE_VERSION.equals(version.toString())) {
+            /*
+                This case should not happen to anyone yet.
+
+                The plan for having versions is to be able to upgrade existing databases to a new
+                schema without requiring the users of this system to actually perform any operations.
+                Currently there are no need for such migrations, but considering future development
+                it was added.
+             */
+            logger.error("You have an older version of the DB. Ask realfagskjelleren how to proceed.");
+            return false;
+        }
+
         logger.trace("Database connection successful.");
         return true;
     }
@@ -104,7 +126,6 @@ public class POS {
 
         ui = new ConsoleUI(consoleWidth);
         ui.showWelcomeMessage();
-        logger.trace("UI started.");
 
         logger.trace("Started UI with width "+consoleWidth+".");
         return true;
