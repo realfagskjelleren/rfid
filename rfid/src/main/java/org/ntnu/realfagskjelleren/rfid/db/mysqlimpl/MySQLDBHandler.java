@@ -25,22 +25,8 @@ public class MySQLDBHandler implements DBHandler {
 
     private final String RFID_DATABASE_VERSION = "2.0";
 
-    // Query Strings
-    private final String CREATE_USER_QS = "INSERT INTO user (credit, rfid, ecc, is_staff, created) VALUES (0, ?, ?, 0, NOW());";
-    private final String UPDATE_USER_RFID_QS = "UPDATE user SET rfid = ? WHERE id = ?";
-    private final String GET_USER_BY_RFID_QS = "SELECT * FROM user WHERE rfid = ?;";
-    private final String GET_USER_BY_ECC_QS = "SELECT * FROM user WHERE ecc = ?;";
-    private final String EXISTS_RFID_QS = "SELECT COUNT(*) FROM user WHERE rfid = ?;";
-    private final String EXISTS_ECC_QS = "SELECT COUNT(*) FROM user WHERE ecc = ?;";
-
-    private final String DEPOSIT_QS = "UPDATE user SET credit = credit+? WHERE rfid = ?;";
-    private final String DEDUCT_QS = "UPDATE user SET credit = credit-? WHERE rfid = ?;";
-
-    private final String GET_TRANSACTIONS_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id ORDER BY t.id DESC LIMIT ?;";
-    private final String GET_TRANSACTIONS_BY_USER_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id WHERE u.id = ? ORDER BY t.id DESC LIMIT ?;";
     private final String GET_ALL_USERS_QS = "SELECT * FROM user;";
 
-    private final String TRANSACTION_QS = "INSERT INTO transaction (user_id, value, is_deposit, new_balance) VALUES (?, ?, ?, ?);";
     private final String LOG_QS = "INSERT INTO log (message, date) VALUES (?, datetime('now'));";
 
     public MySQLDBHandler(Settings settings) {
@@ -163,6 +149,7 @@ public class MySQLDBHandler implements DBHandler {
         try (Connection con = getConnection()) {
             if (!rfid_exists(rfid)) {
                 // If it doesn't exist, create
+                String CREATE_USER_QS = "INSERT INTO user (credit, rfid, ecc, is_staff, created) VALUES (0, ?, ?, 0, NOW());";
                 try (PreparedStatement ps = con.prepareStatement(CREATE_USER_QS)) {
                     ps.setString(1, rfid);
                     ps.setInt(2, makeECC());
@@ -171,6 +158,7 @@ public class MySQLDBHandler implements DBHandler {
                 }
             }
 
+            String GET_USER_BY_RFID_QS = "SELECT * FROM user WHERE rfid = ?;";
             try (PreparedStatement ps = con.prepareStatement(GET_USER_BY_RFID_QS)) {
                 ps.setString(1, rfid);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -200,6 +188,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public User get_user(int ecc) throws SQLException {
+        String GET_USER_BY_ECC_QS = "SELECT * FROM user WHERE ecc = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_USER_BY_ECC_QS)) {
 
@@ -236,6 +225,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public void update_user_rfid(int user_id, String rfid) throws SQLException {
+        String UPDATE_USER_RFID_QS = "UPDATE user SET rfid = ? WHERE id = ?";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(UPDATE_USER_RFID_QS)) {
 
@@ -259,6 +249,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public boolean rfid_exists(String rfid) throws SQLException {
+        String EXISTS_RFID_QS = "SELECT COUNT(*) FROM user WHERE rfid = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(EXISTS_RFID_QS)) {
 
@@ -287,6 +278,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public boolean ecc_exists(int ecc) throws SQLException {
+        String EXISTS_ECC_QS = "SELECT COUNT(*) FROM user WHERE ecc = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(EXISTS_ECC_QS)) {
 
@@ -315,6 +307,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public void deposit(String rfid, int value) throws SQLException {
+        String DEPOSIT_QS = "UPDATE user SET credit = credit+? WHERE rfid = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(DEPOSIT_QS)) {
 
@@ -338,6 +331,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public void deduct(String rfid, int value) throws SQLException {
+        String DEDUCT_QS = "UPDATE user SET credit = credit-? WHERE rfid = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(DEDUCT_QS)) {
 
@@ -368,6 +362,7 @@ public class MySQLDBHandler implements DBHandler {
     public List<Transaction> getTransactions(int amount) throws SQLException {
         List <Transaction> transactions = new ArrayList<>();
 
+        String GET_TRANSACTIONS_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id ORDER BY t.id DESC LIMIT ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_QS)) {
 
@@ -409,6 +404,7 @@ public class MySQLDBHandler implements DBHandler {
     public List<Transaction> getTransactions(int user_id, int amount) throws SQLException {
         List <Transaction> transactions = new ArrayList<>();
 
+        String GET_TRANSACTIONS_BY_USER_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id WHERE u.id = ? ORDER BY t.id DESC LIMIT ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_BY_USER_QS)) {
 
@@ -450,6 +446,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public void transaction(int user_id, int value, boolean is_deposit, int new_balance) throws SQLException {
+        String TRANSACTION_QS = "INSERT INTO transaction (user_id, value, is_deposit, new_balance) VALUES (?, ?, ?, ?);";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(TRANSACTION_QS)) {
 
