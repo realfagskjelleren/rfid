@@ -25,8 +25,6 @@ public class MySQLDBHandler implements DBHandler {
 
     private final String RFID_DATABASE_VERSION = "2.0";
 
-    private final String GET_ALL_USERS_QS = "SELECT * FROM user;";
-
     private final String LOG_QS = "INSERT INTO log (message, date) VALUES (?, datetime('now'));";
 
     public MySQLDBHandler(Settings settings) {
@@ -346,10 +344,18 @@ public class MySQLDBHandler implements DBHandler {
         }
     }
 
+    /**
+     * This command will fetch all users stored in the database ordered by when they
+     * were last used.
+     *
+     * @return List of users
+     * @throws SQLException
+     */
     @Override
     public List<User> getAllUsers() throws SQLException {
         List<User> users = new ArrayList<>();
 
+        String GET_ALL_USERS_QS = "SELECT * FROM user ORDER BY last_used;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_ALL_USERS_QS)) {
 

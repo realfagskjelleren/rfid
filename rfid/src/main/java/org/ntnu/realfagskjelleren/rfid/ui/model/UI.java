@@ -29,6 +29,7 @@ public interface UI {
     public void endTransaction(List<String> output);
 
     public void showTransactions(List<Transaction> transactions);
+    public void showUsers(List<User> users);
 
 
 }

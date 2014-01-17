@@ -186,6 +186,14 @@ public class POS {
                     return;
                 }
                 break;
+            case "/2":
+                try {
+                    ui.showUsers(db.getAllUsers());
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to retrieve users from the database. Check your connection.");
+                    return;
+                }
+                break;
             default:
                 ui.display("Unrecognized command. Use /*- for help.");
         }

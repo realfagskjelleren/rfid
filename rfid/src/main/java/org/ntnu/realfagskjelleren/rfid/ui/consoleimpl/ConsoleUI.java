@@ -178,6 +178,33 @@ public class ConsoleUI implements UI {
         display(table(tableData));
     }
 
+    @Override
+    public void showUsers(List<User> users) {
+        List<String> tableData = new ArrayList<>();
+
+        String rowFormat = "%d|%s|%s|%s";
+        String tableHeader = "ID | RFID | Balance | Last used";
+
+        // Generate table
+        tableData.add(tableHeader);
+        tableData.add("===");
+        for (int i=0; i < users.size(); i++) {
+            if (i != 0 && i % 5 == 0) {
+                tableData.add("---");
+            }
+            User u = users.get(i);
+            tableData.add(String.format(
+                    rowFormat,
+                    u.getId(),
+                    u.getRfid(),
+                    u.getCredit(),
+                    u.getLastUsed()
+            ));
+        }
+
+        display(table(tableData));
+    }
+
     /*
         Printing
      */
