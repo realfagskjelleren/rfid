@@ -17,8 +17,6 @@ import java.util.regex.Pattern;
 public class ConsoleUI implements UI {
 
     private Scanner scanner = new Scanner(System.in);
-
-    private final String EXIT_SIGNAL = "***";
                                                          // 0    1    2    3    4    5    6    7    8    9    10   11   12   13   14
     private final char[] boxDrawingCharacters = new char[]{'═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬', '─', '╟', '╢', '╫'};
     private final int consoleWidth;
@@ -78,7 +76,8 @@ public class ConsoleUI implements UI {
             System.out.print("> ");
             String input = scanner.nextLine();
 
-            if (input.equals(EXIT_SIGNAL)) return "exit";
+            // If exit signal is found, return exit.
+            if (input.equals("***")) return "exit";
 
             return input;
         } catch (NoSuchElementException e) {
@@ -97,12 +96,10 @@ public class ConsoleUI implements UI {
         if (active_transaction) {
             frameEmpty();
             printLeftAligned(output);
-            //frameEmpty();
         }
         else {
             print("");
             print(output);
-            //print("");
         }
 
     }
@@ -160,10 +157,7 @@ public class ConsoleUI implements UI {
         // Generate table
         tableData.add(tableHeader);
         tableData.add("===");
-        for (int i=0; i < transactions.size(); i++) {
-            if (i != 0 && i % 5 == 0) {
-                tableData.add("---");
-            }
+        for (int i=transactions.size() - 1; i >= 0; i--) {
             Transaction t = transactions.get(i);
             String sign = t.isDeposit() ? "+" : "-";
             tableData.add(String.format(
@@ -173,6 +167,9 @@ public class ConsoleUI implements UI {
                     t.getNew_balance(),
                     t.getDate()
             ));
+            if (i != 0 && i % 5 == 0) {
+                tableData.add("---");
+            }
         }
 
         display(table(tableData));
