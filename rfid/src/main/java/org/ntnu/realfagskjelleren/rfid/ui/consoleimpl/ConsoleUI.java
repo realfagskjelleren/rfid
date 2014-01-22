@@ -61,7 +61,16 @@ public class ConsoleUI implements UI {
 
     @Override
     public void showHelp() {
-        display("Help...");
+        display(table(Arrays.asList(
+                "Command | Description",
+                "---",
+                "+xxx | Inserts xxx into the currently scanned RFID",
+                "xxx | Remove xxx from the currently scanned RFID",
+                "---",
+                "*** | Quit",
+                "/1 | Show latest transactions",
+                "/2 | Show all users"
+        )));
     }
 
     @Override
@@ -84,6 +93,19 @@ public class ConsoleUI implements UI {
             // Occurs when the program is interrupted. Essentially means quit. Returning null will exit.
             return null;
         }
+    }
+
+    @Override
+    public boolean takeConfirmation(String output) {
+        display(Arrays.asList(
+                output,
+                "Use 5 for yes and anything else for no."
+        ));
+        System.out.print("> ");
+
+        String input = scanner.nextLine();
+
+        return input.equals("5");
     }
 
     @Override
@@ -133,18 +155,18 @@ public class ConsoleUI implements UI {
 
     @Override
     public void error(String error) {
-        display(Arrays.asList(
-                StringUtils.repeat("!", consoleWidth - 4),
-                StringUtils.center(error, consoleWidth - 4),
-                StringUtils.repeat("!", consoleWidth - 4)
-        ));
+        error(Arrays.asList(error));
     }
 
     @Override
     public void error(List<String> errors) {
+        List<String> formattedErrors = new ArrayList<>();
+        formattedErrors.add(StringUtils.repeat("!", consoleWidth - 4));
         for (String error : errors) {
-
+            formattedErrors.add(StringUtils.center(error, consoleWidth - 4));
         }
+        formattedErrors.add(StringUtils.repeat("!", consoleWidth - 4));
+        display(formattedErrors);
     }
 
     @Override
@@ -214,7 +236,7 @@ public class ConsoleUI implements UI {
      * @param line Line to be printed
      */
     private void print(String line) {
-        System.out.println(line);;
+        System.out.println(line);
     }
 
     /**

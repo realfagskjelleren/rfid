@@ -19,6 +19,7 @@ public interface UI {
     public void showHelp();
 
     public String takeInput();
+    public boolean takeConfirmation(String output);
 
     public void display(String output);
     public void display(List<String> output);
