@@ -4,6 +4,7 @@ package org.ntnu.realfagskjelleren.rfid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
+import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.db.model.Version;
 import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
@@ -13,6 +14,7 @@ import org.ntnu.realfagskjelleren.rfid.ui.consoleimpl.ConsoleUI;
 import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  * This POS system is made to work with an RFID scanner and numeric pad.
@@ -127,7 +129,7 @@ public class POS {
         ui = new ConsoleUI(consoleWidth);
         ui.showWelcomeMessage();
 
-        logger.trace("Started UI with width "+consoleWidth+".");
+        logger.trace("Started ConsoleUI with width "+consoleWidth+".");
         return true;
     }
 
@@ -196,11 +198,19 @@ public class POS {
                 break;
             case "/1":
                 try {
+                    List<Transaction> transactions;
                     if (currentUser == null) {
-                        ui.showTransactions(db.getTransactions(10));
+                        transactions = db.getTransactions(10);
                     }
                     else {
-                        ui.showTransactions(db.getTransactions(currentUser.getId(), 10));
+                        transactions = db.getTransactions(currentUser.getId(), 10);
+                    }
+
+                    if (transactions.isEmpty()) {
+                        ui.display("No transactions!");
+                    }
+                    else {
+                        ui.showTransactions(transactions);
                     }
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to retrieve transactions from the database. Check your connection.");
@@ -209,7 +219,13 @@ public class POS {
                 break;
             case "/2":
                 try {
-                    ui.showUsers(db.getAllUsers());
+                    List<User> users = db.getAllUsers();
+                    if (users.isEmpty()) {
+                        ui.display("No users!");
+                    }
+                    else {
+                        ui.showUsers(users);
+                    }
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to retrieve users from the database. Check your connection.");
                     return;
@@ -264,6 +280,13 @@ public class POS {
 
             try {
                 int amount = Integer.parseInt(input);
+
+                if (amount >= 1000) {
+                    if (!ui.takeConfirmation("The amount which was input is very high, are you sure it is correct?")) {
+                        return;
+                    }
+                }
+
                 int new_balance;
 
                 if (is_deposit) {
