@@ -6,6 +6,7 @@ target/
 *.ipr
 *.db
 *.swp
+.DS_Store
 
 # idea ignores
 .idea/
