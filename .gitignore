@@ -1,5 +1,4 @@
 settings/
-release/
 log4j2.xml
 target/
 .iws
@@ -7,6 +6,9 @@ target/
 *.db
 *.swp
 .DS_Store
+
+release*
+beta*
 
 # idea ignores
 .idea/
