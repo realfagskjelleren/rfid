@@ -86,5 +86,12 @@
             <version>2.0-beta9</version>
         </dependency>
 
+        <!-- Java Native Access lib, used to print to windows console. -->
+        <dependency>
+            <groupId>com.sun.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>3.0.9</version>
+        </dependency>
+
     </dependencies>
 </project>
