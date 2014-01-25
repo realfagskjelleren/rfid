@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class ConsoleUI implements UI {
 
     private Scanner scanner = new Scanner(System.in);
+    private Console console = new Console();     
                                                          // 0    1    2    3    4    5    6    7    8    9    10   11   12   13   14
     private final char[] boxDrawingCharacters = new char[]{'═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬', '─', '╟', '╢', '╫'};
     private final int consoleWidth;
@@ -82,7 +83,7 @@ public class ConsoleUI implements UI {
             else {
                 display("- Input card number or type command. Use /*- for help.");
             }
-            System.out.print("> ");
+            console.print("> ");
             String input = scanner.nextLine();
 
             // If exit signal is found, return exit.
@@ -101,7 +102,7 @@ public class ConsoleUI implements UI {
                 output,
                 "Use 5 for yes and anything else for no."
         ));
-        System.out.print("> ");
+        console.print("> ");
 
         String input = scanner.nextLine();
 
@@ -120,8 +121,8 @@ public class ConsoleUI implements UI {
             printLeftAligned(output);
         }
         else {
-            print("");
-            print(output);
+            println("");
+            println(output);
         }
 
     }
@@ -229,14 +230,14 @@ public class ConsoleUI implements UI {
      */
 
     /**
-     * Regular print medthos. No borders.
+     * Regular print method. No borders.
      * This method is used in order to simplify changing the ui at a later
-     * point, rather than statically using System.out.println.
+     * point, rather than statically using console.println.
      *
      * @param line Line to be printed
      */
-    private void print(String line) {
-        System.out.println(line);
+    private void println(String line) {
+        console.println(line);
     }
 
     /**
@@ -244,9 +245,9 @@ public class ConsoleUI implements UI {
      *
      * @param lines Lines to be printed.
      */
-    private void print(List<String> lines) {
+    private void println(List<String> lines) {
         for (String line : lines) {
-            print(line);
+            println(line);
         }
     }
 
@@ -258,28 +259,28 @@ public class ConsoleUI implements UI {
      * Inserts a line into the transactionthat is the top of a square frame.
      */
     private void frameTop() {
-        System.out.println(boxDrawingCharacters[2] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[3]);
+        console.println(boxDrawingCharacters[2] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[3]);
     }
 
     /**
      * Inserts a line into the transactionthat is the bottom of a square frame.
      */
     private void frameBottom() {
-        System.out.println(boxDrawingCharacters[4] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[5]);
+        console.println(boxDrawingCharacters[4] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[5]);
     }
 
     /**
      * Inserts a line into the transactionwith vertical borders and a horizontal double line.
      */
     private void frameMiddle() {
-        System.out.println(boxDrawingCharacters[6] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[7]);
+        console.println(boxDrawingCharacters[6] + StringUtils.repeat(boxDrawingCharacters[0], consoleWidth-2) + boxDrawingCharacters[7]);
     }
 
     /**
      * Inserts a line into the transactionwith only vertical borders on either side and no content.
      */
     private void frameEmpty() {
-        System.out.println(boxDrawingCharacters[1] + StringUtils.repeat(" ", consoleWidth-2) + boxDrawingCharacters[1]);
+        console.println(boxDrawingCharacters[1] + StringUtils.repeat(" ", consoleWidth-2) + boxDrawingCharacters[1]);
     }
 
     /* General printing methods */
@@ -304,7 +305,7 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            System.out.println(leftAlign(line));
+            console.println(leftAlign(line));
         }
     }
 
@@ -328,7 +329,7 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            System.out.println(rightAlign(line));
+            console.println(rightAlign(line));
         }
     }
 
@@ -352,7 +353,7 @@ public class ConsoleUI implements UI {
         List<String> wrappedLines = wrap(lines);
 
         for (String line : wrappedLines) {
-            System.out.println(center(line));
+            console.println(center(line));
         }
     }
 
