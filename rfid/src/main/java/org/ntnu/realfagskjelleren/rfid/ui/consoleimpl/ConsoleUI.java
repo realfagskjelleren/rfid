@@ -181,6 +181,11 @@ public class ConsoleUI implements UI {
         display(formattedErrors);
     }
 
+    /**
+     * Show a table of transactions.
+     *
+     * @param transactions List of transactions to display
+     */
     @Override
     public void showTransactions(List<Transaction> transactions) {
         List<String> tableData = new ArrayList<>();
@@ -209,6 +214,11 @@ public class ConsoleUI implements UI {
         display(table(tableData));
     }
 
+    /**
+     * Show a table of users.
+     *
+     * @param users List of users to display
+     */
     @Override
     public void showUsers(List<User> users) {
         List<String> tableData = new ArrayList<>();
@@ -236,6 +246,12 @@ public class ConsoleUI implements UI {
         display(table(tableData));
     }
 
+    /**
+     * Displays statistics
+     *
+     * @param stats List of statistics in form of plain lines
+     * @param topTen List of top ten spenders in form of table data
+     */
     @Override
     public void showStats(List<String> stats, List<String> topTen) {
         display(stats);

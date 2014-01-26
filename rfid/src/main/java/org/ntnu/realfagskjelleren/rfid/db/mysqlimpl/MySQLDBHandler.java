@@ -457,6 +457,12 @@ public class MySQLDBHandler implements DBHandler {
         return -1;
     }
 
+    /**
+     * Returns the total value of the combined credit of all users.
+     *
+     * @return Value stored in the system
+     * @throws SQLException
+     */
     public int getTotalValue() throws SQLException {
         String TOTAL_VALUE_QS = "SELECT ABS(SUM(credit)) AS total FROM user;";
         try (Connection con = getConnection();
@@ -640,6 +646,13 @@ public class MySQLDBHandler implements DBHandler {
         return topTen;
     }
 
+    /**
+     * Makes a list of the top ten spenders over the last hours.
+     *
+     * @param hours Hours to include
+     * @return List of strings: "RFID|Amount"
+     * @throws SQLException
+     */
     @Override
     public List<String> getTopTenFromLastHours(int hours) throws SQLException {
         List<String> topTen = new ArrayList<>();
