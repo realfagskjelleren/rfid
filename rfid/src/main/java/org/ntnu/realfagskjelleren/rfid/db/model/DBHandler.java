@@ -24,10 +24,14 @@ public interface DBHandler {
     public void deduct(String rfid, int value) throws SQLException;
 
     public List<User> getAllUsers() throws SQLException;
+    public int getTotalValue() throws SQLException;
     public int getUserCount() throws SQLException;
     public List<Transaction> getTransactions(int amount) throws SQLException;
     public List<Transaction> getTransactions(int user_id, int amount) throws SQLException;
     public List<Transaction> getTransactionsFromLastHours(int hours) throws SQLException;
+
+    public List<String> getTopTen() throws SQLException;
+    public List<String> getTopTenFromLastHours(int hours) throws SQLException;
 
     public void transaction(int user_id, int value, boolean is_deposit, int new_balance) throws SQLException;
     // Only meant to be used with the import of old sqlite DBs. Remove this when it is no longer needed.

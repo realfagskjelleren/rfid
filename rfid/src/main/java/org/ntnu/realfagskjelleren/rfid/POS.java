@@ -15,7 +15,7 @@ import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
 import java.io.File;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.*;
 
 /**
  * This POS system is made to work with an RFID scanner and numeric pad.
@@ -250,13 +250,23 @@ public class POS {
                 ui.showHelp();
                 break;
             case "/transactions":
+                int transactionsToShow = 10;
+
+                if (args.length > 1) {
+                    try {
+                        transactionsToShow = Integer.parseInt(args[1]);
+                    } catch (NumberFormatException e) {
+                        ui.display("Invalid number of transactions, showing 10.");
+                    }
+                }
+
                 try {
                     List<Transaction> transactions;
                     if (currentUser == null) {
-                        transactions = db.getTransactions(10);
+                        transactions = db.getTransactions(transactionsToShow);
                     }
                     else {
-                        transactions = db.getTransactions(currentUser.getId(), 10);
+                        transactions = db.getTransactions(currentUser.getId(), transactionsToShow);
                     }
 
                     if (transactions.isEmpty()) {
@@ -285,7 +295,43 @@ public class POS {
                 }
                 break;
             case "/stats":
-                ui.display("stats");
+                int hours = 15;
+
+                List<String> topTen;
+                List<String> topTenTable = new ArrayList<>();
+
+                try {
+                    if (args.length > 1) {
+                        hours = Integer.parseInt(args[1]);
+                        topTen = db.getTopTenFromLastHours(hours);
+                    }
+                    else {
+                        topTen = db.getTopTen();
+                    }
+
+                    int numberOfUsers = db.getUserCount();
+                    int totalValue = db.getTotalValue();
+
+                    List<String> stats = Arrays.asList(
+                            "Displaying stats for the last "+hours+" hours.",
+                            "",
+                            "Total number of registered users: "+ numberOfUsers,
+                            "Total value of all users: "+totalValue
+                    );
+
+                    topTenTable.add("RFID | Money spent");
+                    topTenTable.add("===");
+                    for (String line : topTen) {
+                        topTenTable.add(line);
+                    }
+
+                    ui.showStats(stats, topTenTable);
+
+                } catch (NumberFormatException e) {
+                    ui.display("Invalid number of hours, showing 15.");
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to create the stats. Check your connection.");
+                }
                 break;
             default:
                 ui.invalidCommand();
@@ -331,7 +377,6 @@ public class POS {
             boolean is_deposit = false;
             if (input.startsWith("+")) {
                 is_deposit = true;
-                input = input.substring(1);
             }
 
             try {
@@ -377,7 +422,7 @@ public class POS {
                 try {
                     db.transaction(currentUser.getId(), amount, is_deposit, new_balance);
                 } catch (SQLException e) {
-                    ui.error("SQL error occurred while trying to store log this transaction. The money has been deposited.");
+                    ui.error("SQL error occurred while trying to store log this transaction. The balance of the account has been updated.");
                     return;
                 }
 

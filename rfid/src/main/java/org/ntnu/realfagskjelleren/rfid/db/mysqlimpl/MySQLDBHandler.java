@@ -433,6 +433,12 @@ public class MySQLDBHandler implements DBHandler {
         return users;
     }
 
+    /**
+     * Get a count of all users stored in the database.
+     *
+     * @return Integer amount of all users
+     * @throws SQLException
+     */
     public int getUserCount() throws SQLException {
         String USER_COUNT_QS = "SELECT COUNT(*) FROM user;";
         try (Connection con = getConnection();
@@ -444,6 +450,25 @@ public class MySQLDBHandler implements DBHandler {
             }
         } catch (SQLException ex) {
             logger.error(String.format("Failed to obtain user count."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return -1;
+    }
+
+    public int getTotalValue() throws SQLException {
+        String TOTAL_VALUE_QS = "SELECT ABS(SUM(credit)) AS total FROM user;";
+        try (Connection con = getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(TOTAL_VALUE_QS)) {
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Failed to obtain total value."));
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -578,6 +603,73 @@ public class MySQLDBHandler implements DBHandler {
         }
 
         return transactions;
+    }
+
+    /**
+     * Makes a list of the top ten spenders through all time.
+     *
+     * @return List of strings: "RFID|Amount"
+     * @throws SQLException
+     */
+    @Override
+    public List<String> getTopTen() throws SQLException {
+        List<String> topTen = new ArrayList<>();
+
+        String TOP_TEN_QS = "SELECT ABS(SUM(t.value)) AS spent, u.rfid " +
+                            "FROM transaction AS t " +
+                            "INNER JOIN user AS u " +
+                            "ON t.user_id = u.id " +
+                            "WHERE t.value < 0 " +
+                            "GROUP BY u.rfid " +
+                            "ORDER BY spent " +
+                            "LIMIT 10;";
+        try (Connection con = getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(TOP_TEN_QS)) {
+
+            while (rs.next()) {
+                topTen.add(rs.getString("rfid") +"|"+ rs.getInt("spent"));
+            }
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not generate top ten."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return topTen;
+    }
+
+    @Override
+    public List<String> getTopTenFromLastHours(int hours) throws SQLException {
+        List<String> topTen = new ArrayList<>();
+
+        String TOP_TEN_QS = "SELECT ABS(SUM(t.value)) AS spent, u.rfid " +
+                            "FROM transaction AS t " +
+                            "INNER JOIN user AS u " +
+                            "ON t.user_id = u.id " +
+                            "WHERE t.value < 0 AND t.date > DATE_SUB(NOW(), INTERVAL ? HOUR) " +
+                            "GROUP BY u.rfid " +
+                            "ORDER BY spent " +
+                            "LIMIT 10;";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(TOP_TEN_QS)) {
+
+            ps.setInt(1, hours);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    topTen.add(rs.getString("rfid") +"|"+ rs.getInt("spent"));
+                }
+            }
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not generate top ten."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return topTen;
     }
 
     /**
