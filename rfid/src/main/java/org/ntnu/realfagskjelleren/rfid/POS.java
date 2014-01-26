@@ -13,6 +13,7 @@ import org.ntnu.realfagskjelleren.rfid.settings.VerifySettings;
 import org.ntnu.realfagskjelleren.rfid.ui.consoleimpl.ConsoleUI;
 import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -50,6 +51,9 @@ public class POS {
 
         // Start the UI
         if (!initiateUI()) exit_application();
+
+        // Attempt to find old data to import into new system
+        if (!attemptImport()) exit_application();
 
         // Start program.
         start();
@@ -131,6 +135,54 @@ public class POS {
 
         logger.trace("Started ConsoleUI with width "+consoleWidth+".");
         return true;
+    }
+
+    private boolean attemptImport() {
+        File file = new File("pos.unread.db");
+
+        // If there is no old DB file, skip the whole import procedure.
+        if (!file.exists()) return true;
+
+        try {
+            int userCount = db.getUserCount();
+
+            if (userCount > 0) {
+                ui.error("This system already has users stored in it.");
+
+                boolean confirmImport = ui.takeConfirmation("Are you really sure you wish to import old data from pos.unread.db? Make sure you take a backup first!");
+
+                if (!confirmImport) {
+                    ui.display("To avoid this popping up every time you start this system, delete 'pos.unread.db' from your RFID folder.");
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            ui.error("Failed to obtain user count. Check database connection.");
+            return false;
+        }
+
+        ui.display("Attempting to import users..");
+
+        int response = ConvertDataFromRFID1.convert(db);
+        switch (response) {
+            case 0:
+                // Nothing to import, so display nothing.
+                return true;
+            case 1:
+                if (file.renameTo(new File("pos.read.db"))) {
+                    ui.display("Import successful!");
+                    return true;
+                }
+                else {
+                    ui.error("Finished importing old data from 'pos.unread.db', but could not rename it. Please manually do so and relaunch the application.");
+                    return false;
+                }
+            case 2:
+                ui.error("Attempt to convert old database has failed. Check the logs for more information.");
+                return false;
+        }
+
+        return false;
     }
 
     /**
@@ -230,6 +282,9 @@ public class POS {
                     ui.error("SQL error occurred while trying to retrieve users from the database. Check your connection.");
                     return;
                 }
+                break;
+            case "---":
+
                 break;
             default:
                 ui.display("Unrecognized command. Use /*- for help.");

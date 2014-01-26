@@ -24,7 +24,7 @@ public class MySQLDBHandler implements DBHandler {
 
     private Settings settings;
 
-    private final String LOG_QS = "INSERT INTO log (message, date) VALUES (?, datetime('now'));";
+    private final String LOG_QS = "INSERT INTO log (message, date) VALUES (?, NOW());";
 
     public MySQLDBHandler(Settings settings) {
         this.settings = settings;
@@ -433,6 +433,24 @@ public class MySQLDBHandler implements DBHandler {
         return users;
     }
 
+    public int getUserCount() throws SQLException {
+        String USER_COUNT_QS = "SELECT COUNT(*) FROM user;";
+        try (Connection con = getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(USER_COUNT_QS)) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            logger.error(String.format("Failed to obtain user count."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return -1;
+    }
+
     /**
      * Fetches the last 'amount' transactions from the database.
      *
@@ -444,7 +462,11 @@ public class MySQLDBHandler implements DBHandler {
     public List<Transaction> getTransactions(int amount) throws SQLException {
         List <Transaction> transactions = new ArrayList<>();
 
-        String GET_TRANSACTIONS_QS = "SELECT * FROM transaction AS t INNER JOIN user AS u ON t.user_id = u.id ORDER BY t.id DESC LIMIT ?;";
+        String GET_TRANSACTIONS_QS = "SELECT * " +
+                                     "FROM transaction AS t " +
+                                     "INNER JOIN user AS u " +
+                                     "ON t.user_id = u.id " +
+                                     "ORDER BY t.id DESC LIMIT ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_QS)) {
 
@@ -463,8 +485,49 @@ public class MySQLDBHandler implements DBHandler {
                     transactions.add(tr);
                 }
             }
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not retrieve transactions."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
 
+        return transactions;
+    }
 
+    /**
+     * Retrieves transactions from the database from a specified time window.
+     *
+     * @param hours Hours back in time to look
+     * @return List of Transaction objects
+     * @throws SQLException
+     */
+    @Override
+    public List<Transaction> getTransactionsFromLastHours(int hours) throws SQLException {
+        List <Transaction> transactions = new ArrayList<>();
+
+        String GET_TRANSACTIONS_FROM_LAST_HOURS_QS = "SELECT * " +
+                                     "FROM transaction AS t " +
+                                     "INNER JOIN user AS u " +
+                                     "ON t.user_id = u.id " +
+                                     "WHERE t.date > DATE_SUB(NOW(), INTERVAL ? HOUR);";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(GET_TRANSACTIONS_FROM_LAST_HOURS_QS)) {
+
+            ps.setInt(1, hours);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Transaction tr = new Transaction(
+                            rs.getInt("user_id"),
+                            rs.getString("rfid"),
+                            rs.getInt("value"),
+                            rs.getInt("new_balance"),
+                            rs.getBoolean("is_deposit"),
+                            rs.getTimestamp("date")
+                    );
+                    transactions.add(tr);
+                }
+            }
         } catch (SQLException ex) {
             logger.error(String.format("Could not retrieve transactions."));
             logger.error(ex.getMessage(), ex);
@@ -536,6 +599,37 @@ public class MySQLDBHandler implements DBHandler {
             ps.setInt(2, value);
             ps.setBoolean(3, is_deposit);
             ps.setInt(4, new_balance);
+            ps.executeUpdate();
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Failed to create transaction for %d to User '%d'. Deposit = %s", value, user_id, is_deposit));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+    }
+
+    /**
+     * This method is only supposed to be used with the importing of older SQL databases
+     * to allow the timestamp to be set.
+     *
+     * @param user_id ID of {@link User} for this transaction
+     * @param value Amount of money
+     * @param is_deposit True if money was deposited
+     * @param new_balance The new balance for {@link User}
+     * @param timestamp Timestamp of the transaction
+     * @throws SQLException
+     */
+    @Override
+    public void transaction(int user_id, int value, boolean is_deposit, int new_balance, Timestamp timestamp) throws SQLException {
+        String TRANSACTION_QS = "INSERT INTO transaction (user_id, value, is_deposit, new_balance, date) VALUES (?, ?, ?, ?, ?);";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(TRANSACTION_QS)) {
+
+            ps.setInt(1, user_id);
+            ps.setInt(2, value);
+            ps.setBoolean(3, is_deposit);
+            ps.setInt(4, new_balance);
+            ps.setTimestamp(5, timestamp);
             ps.executeUpdate();
 
         } catch (SQLException ex) {
