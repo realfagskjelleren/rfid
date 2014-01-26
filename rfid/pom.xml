@@ -60,6 +60,13 @@
             <version>5.1.28</version>
         </dependency>
 
+        <!-- SQLite3 connector, can be removed once conversion from old databases are done -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.7.2</version>
+        </dependency>
+
         <!-- Java to JSON library -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
