@@ -75,6 +75,11 @@ public class ConsoleUI implements UI {
     }
 
     @Override
+    public void invalidCommand() {
+        display("Unrecognized command. Use /*- for help.");
+    }
+
+    @Override
     public String takeInput() {
         try {
             if (active_transaction) {
@@ -88,6 +93,10 @@ public class ConsoleUI implements UI {
 
             // If exit signal is found, return exit.
             if (input.equals("***")) return "exit";
+            if (input.equals("/1")) return "/transactions";
+            if (input.equals("/2")) return "/users";
+            if (input.equals("---")) return "/stats";
+
 
             return input;
         } catch (NoSuchElementException e) {

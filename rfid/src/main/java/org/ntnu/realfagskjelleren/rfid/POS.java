@@ -225,8 +225,7 @@ public class POS {
                 else {
                     ui.endTransaction("Not valid input. Transaction aborted.");
                 }
-                currentRFID = "";
-                currentUser = null;
+                resetCurrentInfo();
                 break;
             default:
                 if (input.startsWith("/")) {
@@ -244,11 +243,13 @@ public class POS {
      * @param input
      */
     private void handleCommand(String input) {
-        switch (input) {
-            case "/*-":
+        String[] args = input.split(" ");
+
+        switch (args[0]) {
+            case "/help":
                 ui.showHelp();
                 break;
-            case "/1":
+            case "/transactions":
                 try {
                     List<Transaction> transactions;
                     if (currentUser == null) {
@@ -269,7 +270,7 @@ public class POS {
                     return;
                 }
                 break;
-            case "/2":
+            case "/users":
                 try {
                     List<User> users = db.getAllUsers();
                     if (users.isEmpty()) {
@@ -283,11 +284,11 @@ public class POS {
                     return;
                 }
                 break;
-            case "---":
-
+            case "/stats":
+                ui.display("stats");
                 break;
             default:
-                ui.display("Unrecognized command. Use /*- for help.");
+                ui.invalidCommand();
         }
     }
 

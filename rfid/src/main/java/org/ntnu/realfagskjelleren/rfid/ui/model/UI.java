@@ -17,6 +17,7 @@ public interface UI {
 
     public void showWelcomeMessage();
     public void showHelp();
+    public void invalidCommand();
 
     public String takeInput();
     public boolean takeConfirmation(String output);
