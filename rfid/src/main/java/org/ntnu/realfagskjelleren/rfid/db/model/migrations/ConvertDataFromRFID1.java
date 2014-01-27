@@ -1,4 +1,4 @@
-package org.ntnu.realfagskjelleren.rfid;
+package org.ntnu.realfagskjelleren.rfid.db.model.migrations;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
