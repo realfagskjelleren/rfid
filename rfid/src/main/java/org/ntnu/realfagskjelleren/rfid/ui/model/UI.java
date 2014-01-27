@@ -25,6 +25,7 @@ public interface UI {
 
     public void display(String output);
     public void display(List<String> output);
+    public void showTable(List<String> tableData);
     public void error(String error);
     public void error(List<String> errors);
     public void startTransaction(User user);

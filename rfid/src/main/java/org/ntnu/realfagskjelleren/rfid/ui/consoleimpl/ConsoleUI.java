@@ -69,6 +69,7 @@ public class ConsoleUI implements UI {
                 "xxx | Remove xxx from the currently scanned RFID",
                 "---",
                 "*** | Quit",
+                "-*-X | Show the X most profitable days (If X is empty show all)",
                 "* | Show all users",
                 "/X | Show X latest transactions (If X is empty show 10)",
                 "-X | Show stats for the last X hours (If X is empty show 15 hours)"
@@ -100,10 +101,11 @@ public class ConsoleUI implements UI {
             // If exit signal is found, return exit.
             if (input.equals("***")) return "exit";
             if (input.equals("/*-")) return "/help";
+            if (input.startsWith("+++")) return "/updateRfid";
+            if (input.startsWith("-*-")) return "/topDays "+input.substring(3);
             if (input.startsWith("*")) return "/users";
             if (input.startsWith("/")) return "/transactions " + input.substring(1);
             if (input.startsWith("-")) return "/stats " + input.substring(1);
-            if (input.startsWith("+++")) return "/updaterfid";
 
             return input;
         } catch (NoSuchElementException e) {
@@ -141,6 +143,11 @@ public class ConsoleUI implements UI {
             println(output);
         }
 
+    }
+
+    @Override
+    public void showTable(List<String> tableData) {
+        display(table(tableData));
     }
 
     @Override

@@ -30,6 +30,8 @@ public interface DBHandler {
     public List<Transaction> getTransactions(int user_id, int amount) throws SQLException;
     public List<Transaction> getTransactionsFromLastHours(int hours) throws SQLException;
 
+    public String getSalesForDate(String date) throws SQLException;
+    public List<String> topDays() throws SQLException;
     public List<String> getTopTen() throws SQLException;
     public List<String> getTopTenFromLastHours(int hours) throws SQLException;
 

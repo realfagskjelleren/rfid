@@ -612,6 +612,75 @@ public class MySQLDBHandler implements DBHandler {
     }
 
     /**
+     * Fetches the sales for a specified date.
+     *
+     * @param date Date to look up
+     * @return String in the format; "date|sales"
+     * @throws SQLException
+     */
+    @Override
+    public String getSalesForDate(String date) throws SQLException {
+        String SALES_FOR_DATE = "SELECT SUM(value) AS sales, DATE_FORMAT(date, '%W %d-%m-%Y') AS date " +
+                "FROM `transaction` " +
+                "WHERE is_deposit != 1 " +
+                "AND value < 1000 " +
+                "AND DATE_FORMAT(DATE(date - INTERVAL 9 hour), '%Y-%m-%d') = ?;";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(SALES_FOR_DATE)) {
+
+            ps.setString(1, date);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    if (rs.getString("date") == null) return null;
+                    return rs.getString("date") +"|"+ rs.getInt("sales");
+                }
+            }
+
+
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not retrieve transactions."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns all days the system has been used and how much the sales were that day.
+     *
+     * @return List of Strings in the format: "# | date | sales"
+     * @throws SQLException
+     */
+    @Override
+    public List<String> topDays() throws SQLException {
+        List<String> topDays = new ArrayList<>();
+
+        String TOP_DAYS_QS = "SELECT SUM(value) AS sales, DATE_FORMAT(date, '%W %d-%m-%Y') AS date " +
+                             "FROM `transaction` " +
+                             "WHERE is_deposit != 1 AND value < 1000 " +
+                             "GROUP BY DATE(date - INTERVAL 9 hour) " +
+                             "ORDER BY sales DESC;";
+        try (Connection con = getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(TOP_DAYS_QS)) {
+
+            int i = 0;
+            while (rs.next()) {
+                i++;
+                topDays.add(i +"|"+ rs.getString("date") +"|"+ rs.getInt("sales"));
+            }
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not generate top days."));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return topDays;
+    }
+
+    /**
      * Makes a list of the top ten spenders through all time.
      *
      * @return List of strings: "RFID|Amount"
@@ -625,9 +694,9 @@ public class MySQLDBHandler implements DBHandler {
                             "FROM transaction AS t " +
                             "INNER JOIN user AS u " +
                             "ON t.user_id = u.id " +
-                            "WHERE t.value < 0 " +
+                            "WHERE t.is_deposit != 1 AND t.value < 1000 " +
                             "GROUP BY u.rfid " +
-                            "ORDER BY spent " +
+                            "ORDER BY spent DESC " +
                             "LIMIT 10;";
         try (Connection con = getConnection();
              Statement st = con.createStatement();
@@ -661,9 +730,9 @@ public class MySQLDBHandler implements DBHandler {
                             "FROM transaction AS t " +
                             "INNER JOIN user AS u " +
                             "ON t.user_id = u.id " +
-                            "WHERE t.value < 0 AND t.date > DATE_SUB(NOW(), INTERVAL ? HOUR) " +
+                            "WHERE t.is_deposit != 1 AND t.date > DATE_SUB(NOW(), INTERVAL ? HOUR) " +
                             "GROUP BY u.rfid " +
-                            "ORDER BY spent " +
+                            "ORDER BY spent DESC " +
                             "LIMIT 10;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(TOP_TEN_QS)) {

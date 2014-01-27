@@ -7,6 +7,7 @@ import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
 import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.db.model.Version;
+import org.ntnu.realfagskjelleren.rfid.db.model.migrations.ConvertDataFromRFID1;
 import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 import org.ntnu.realfagskjelleren.rfid.settings.VerifySettings;
@@ -15,6 +16,8 @@ import org.ntnu.realfagskjelleren.rfid.ui.model.UI;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -273,6 +276,7 @@ public class POS {
                         ui.display("No transactions!");
                     }
                     else {
+                        ui.display("Showing transactions.");
                         ui.showTransactions(transactions);
                     }
                 } catch (SQLException e) {
@@ -287,6 +291,7 @@ public class POS {
                         ui.display("No users!");
                     }
                     else {
+                        ui.display("Showing all users.");
                         ui.showUsers(users);
                     }
                 } catch (SQLException e) {
@@ -319,10 +324,15 @@ public class POS {
                             "Total value of all users: "+totalValue
                     );
 
-                    topTenTable.add("RFID | Money spent");
-                    topTenTable.add("===");
-                    for (String line : topTen) {
-                        topTenTable.add(line);
+                    if (topTen.size() == 0) {
+                        topTenTable.add("No transactions in the past "+hours+" hours.");
+                    }
+                    else {
+                        topTenTable.add("RFID | Money spent");
+                        topTenTable.add("===");
+                        for (String line : topTen) {
+                            topTenTable.add(line);
+                        }
                     }
 
                     ui.showStats(stats, topTenTable);
@@ -331,6 +341,52 @@ public class POS {
                     ui.display("Invalid number of hours, showing 15.");
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to create the stats. Check your connection.");
+                }
+                break;
+            case "/updateRfid":
+                if (currentUser == null) {
+                    ui.display("update rfid stuff.");
+                }
+
+                break;
+            case "/topDays":
+                int amountToShow = -1;
+
+                if (args.length > 1) {
+                    try {
+                        amountToShow = Integer.parseInt(args[1]);
+                    } catch (NumberFormatException e) {
+                        ui.display("Invalid number to show, showing all.");
+                    }
+                }
+
+                try {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    Date curDate = new Date();
+                    // Subtract 9 hours, as POS days are from 09:00 - 08:59
+                    Date date = new Date(curDate.getTime() - (9 * 3600 * 1000));
+
+                    List<String> topDaysData = new ArrayList<>();
+                    List<String> topDays = db.topDays();
+                    String today = db.getSalesForDate(dateFormat.format(date));
+
+                    topDaysData.add("# | Date | Sales");
+                    topDaysData.add("===");
+
+                    if (amountToShow == -1) amountToShow = topDays.size();
+
+                    for (int i=amountToShow; i > 0; i--) {
+                        topDaysData.add(topDays.get(i - 1));
+                    }
+
+                    if (today != null) {
+                        topDaysData.add("---");
+                        topDaysData.add("Today|"+today);
+                    }
+
+                    ui.showTable(topDaysData);
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to create the stats for top days. Check your connection.");
                 }
                 break;
             default:
