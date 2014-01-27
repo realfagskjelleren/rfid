@@ -20,6 +20,7 @@ public interface UI {
     public void invalidCommand();
 
     public String takeInput();
+    public String takeInput(String question);
     public boolean takeConfirmation(String output);
 
     public void display(String output);
@@ -33,6 +34,5 @@ public interface UI {
     public void showTransactions(List<Transaction> transactions);
     public void showUsers(List<User> users);
     public void showStats(List<String> stats, List<String> topTen);
-
 
 }

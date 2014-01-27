@@ -82,13 +82,18 @@ public class ConsoleUI implements UI {
 
     @Override
     public String takeInput() {
+        if (active_transaction) {
+            return takeInput("- Input amount to withdraw or deposit (+).");
+        }
+        else {
+            return takeInput("- Input card number or type command. Use /*- for help.");
+        }
+    }
+
+    @Override
+    public String takeInput(String question) {
         try {
-            if (active_transaction) {
-                display("- Input amount to withdraw or deposit (+).");
-            }
-            else {
-                display("- Input card number or type command. Use /*- for help.");
-            }
+            display(question);
             console.print("> ");
             String input = scanner.nextLine();
 
@@ -98,7 +103,7 @@ public class ConsoleUI implements UI {
             if (input.startsWith("*")) return "/users";
             if (input.startsWith("/")) return "/transactions " + input.substring(1);
             if (input.startsWith("-")) return "/stats " + input.substring(1);
-
+            if (input.startsWith("+++")) return "/updaterfid";
 
             return input;
         } catch (NoSuchElementException e) {
