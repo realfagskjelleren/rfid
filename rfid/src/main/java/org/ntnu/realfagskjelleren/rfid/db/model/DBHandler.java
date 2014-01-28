@@ -32,6 +32,7 @@ public interface DBHandler {
 
     public String getSalesForDate(String date) throws SQLException;
     public List<String> topDays() throws SQLException;
+    public int totalSpendings(String rfid) throws SQLException;
     public List<String> getTopTen() throws SQLException;
     public List<String> getTopTenFromLastHours(int hours) throws SQLException;
 

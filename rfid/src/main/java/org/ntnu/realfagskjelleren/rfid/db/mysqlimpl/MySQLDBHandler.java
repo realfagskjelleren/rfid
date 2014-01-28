@@ -449,7 +449,7 @@ public class MySQLDBHandler implements DBHandler {
                 return rs.getInt(1);
             }
         } catch (SQLException ex) {
-            logger.error(String.format("Failed to obtain user count."));
+            logger.error("Failed to obtain user count.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -474,7 +474,7 @@ public class MySQLDBHandler implements DBHandler {
             }
 
         } catch (SQLException ex) {
-            logger.error(String.format("Failed to obtain total value."));
+            logger.error("Failed to obtain total value.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -517,7 +517,7 @@ public class MySQLDBHandler implements DBHandler {
                 }
             }
         } catch (SQLException ex) {
-            logger.error(String.format("Could not retrieve transactions."));
+            logger.error("Could not retrieve transactions.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -560,7 +560,7 @@ public class MySQLDBHandler implements DBHandler {
                 }
             }
         } catch (SQLException ex) {
-            logger.error(String.format("Could not retrieve transactions."));
+            logger.error("Could not retrieve transactions.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -603,7 +603,7 @@ public class MySQLDBHandler implements DBHandler {
 
 
         } catch (SQLException ex) {
-            logger.error(String.format("Could not retrieve transactions."));
+            logger.error("Could not retrieve transactions.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -639,7 +639,7 @@ public class MySQLDBHandler implements DBHandler {
 
 
         } catch (SQLException ex) {
-            logger.error(String.format("Could not retrieve transactions."));
+            logger.error("Could not retrieve transactions.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -672,12 +672,44 @@ public class MySQLDBHandler implements DBHandler {
                 topDays.add(i +"|"+ rs.getString("date") +"|"+ rs.getInt("sales"));
             }
         } catch (SQLException ex) {
-            logger.error(String.format("Could not generate top days."));
+            logger.error("Could not generate top days.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
 
         return topDays;
+    }
+
+    /**
+     * Fetches the total amount spent by a user.
+     *
+     * @param rfid RFID to look up
+     * @return sum of all purchases
+     * @throws SQLException
+     */
+    @Override
+    public int totalSpendings(String rfid) throws SQLException {
+        String TOP_DAYS_QS = "SELECT SUM( t.value ) AS spent " +
+                "FROM transaction AS t " +
+                "INNER JOIN user AS u ON t.user_id = u.id " +
+                "WHERE t.is_deposit !=1 AND t.value <1000 AND u.rfid = ?;";
+        try (Connection con = getConnection();
+             PreparedStatement ps = con.prepareStatement(TOP_DAYS_QS)) {
+
+            ps.setString(1, rfid);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("spent");
+                }
+            }
+        } catch (SQLException ex) {
+            logger.error(String.format("Could not fetch total spendings for %s.", rfid));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return -1;
     }
 
     /**
@@ -707,7 +739,7 @@ public class MySQLDBHandler implements DBHandler {
             }
 
         } catch (SQLException ex) {
-            logger.error(String.format("Could not generate top ten."));
+            logger.error("Could not generate top ten.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -746,7 +778,7 @@ public class MySQLDBHandler implements DBHandler {
             }
 
         } catch (SQLException ex) {
-            logger.error(String.format("Could not generate top ten."));
+            logger.error("Could not generate top ten.");
             logger.error(ex.getMessage(), ex);
             throw ex;
         }

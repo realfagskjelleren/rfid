@@ -65,14 +65,19 @@ public class ConsoleUI implements UI {
         display(table(Arrays.asList(
                 "Command | Description",
                 "---",
+                "| Requires a card to be scanned before use",
+                "---",
                 "+xxx | Inserts xxx into the currently scanned RFID",
                 "xxx | Remove xxx from the currently scanned RFID",
+                "--- | Shows the total amount of money spent from currently scanned RFID",
+                "| Other commands",
                 "---",
                 "*** | Quit",
-                "-*-X | Show the X most profitable days (If X is empty show all)",
-                "* | Show all users",
+                "/// | Show all users",
+                "--X | Show the X most profitable days (If X is empty show all)",
+                "++ | Show general stats for the system",
                 "/X | Show X latest transactions (If X is empty show 10)",
-                "-X | Show stats for the last X hours (If X is empty show 15 hours)"
+                "*X | Show the top 10 users over the past X hours (If X is empty show 15 hours)"
         )));
     }
 
@@ -101,11 +106,13 @@ public class ConsoleUI implements UI {
             // If exit signal is found, return exit.
             if (input.equals("***")) return "exit";
             if (input.equals("/*-")) return "/help";
-            if (input.startsWith("+++")) return "/updateRfid";
-            if (input.startsWith("-*-")) return "/topDays "+input.substring(3);
-            if (input.startsWith("*")) return "/users";
+            if (input.equals("+++")) return "/updateRfid";
+            if (input.equals("---")) return "/totalSpent";
+            if (input.equals("///")) return "/users";
+            if (input.startsWith("--")) return "/topDays " + input.substring(2);
+            if (input.startsWith("++")) return "/stats " + input.substring(2);
             if (input.startsWith("/")) return "/transactions " + input.substring(1);
-            if (input.startsWith("-")) return "/stats " + input.substring(1);
+            if (input.startsWith("*")) return "/topTen " + input.substring(1);
 
             return input;
         } catch (NoSuchElementException e) {

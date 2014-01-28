@@ -301,32 +301,42 @@ public class POS {
                 }
                 break;
             case "/stats":
-                int hours = 15;
-
-                List<String> topTen;
-                List<String> topTenTable = new ArrayList<>();
+                int numberOfUsers = -1;
+                int totalValue = -1;
 
                 try {
-                    if (args.length > 1) {
-                        hours = Integer.parseInt(args[1]);
-                        topTen = db.getTopTenFromLastHours(hours);
-                    }
-                    else {
-                        topTen = db.getTopTen();
+                    numberOfUsers = db.getUserCount();
+                    totalValue = db.getTotalValue();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                List<String> stats = Arrays.asList(
+                        "Total number of registered users: "+ numberOfUsers,
+                        "Total value of all users: "+totalValue
+                );
+
+                ui.display(stats);
+                break;
+            case "/topTen":
+                try {
+                    int hours = -1;
+                    List<String> topTen;
+
+                    try {
+                        if (args.length > 1) {
+                            hours = Integer.parseInt(args[1]);
+                        }
+                    } catch (NumberFormatException e) {
+                        ui.display("Invalid number of hours, showing all time statistics.");
                     }
 
-                    int numberOfUsers = db.getUserCount();
-                    int totalValue = db.getTotalValue();
+                    if (hours > 0) topTen = db.getTopTenFromLastHours(hours);
+                    else topTen = db.getTopTen();
 
-                    List<String> stats = Arrays.asList(
-                            "Displaying stats for the last "+hours+" hours.",
-                            "",
-                            "Total number of registered users: "+ numberOfUsers,
-                            "Total value of all users: "+totalValue
-                    );
+                    List<String> topTenTable = new ArrayList<>();
 
                     if (topTen.size() == 0) {
-                        topTenTable.add("No transactions in the past "+hours+" hours.");
+                        topTenTable.add("No transactions in the past "+hours+" hours to generate a top 10 from.");
                     }
                     else {
                         topTenTable.add("RFID | Money spent");
@@ -336,10 +346,7 @@ public class POS {
                         }
                     }
 
-                    ui.showStats(stats, topTenTable);
-
-                } catch (NumberFormatException e) {
-                    ui.display("Invalid number of hours, showing 15.");
+                    ui.showTable(topTenTable);
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to create the stats. Check your connection.");
                 }
@@ -388,6 +395,21 @@ public class POS {
                     ui.showTable(topDaysData);
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to create the stats for top days. Check your connection.");
+                }
+                break;
+            case "/totalSpent":
+                if (currentUser == null) {
+                    ui.display("This command requires an RFID to be scanned first.");
+                    return;
+                }
+                int totalSpent = -1;
+
+                try {
+                    totalSpent = db.totalSpendings(currentRFID);
+
+                    ui.endTransaction(String.format("Total money spent by %s: %d", currentRFID, totalSpent));
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to find total spendings. Check your connection.");
                 }
                 break;
             default:
