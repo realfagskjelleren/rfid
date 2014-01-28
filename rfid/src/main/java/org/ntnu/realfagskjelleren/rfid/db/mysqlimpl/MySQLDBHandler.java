@@ -275,7 +275,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public void update_user_rfid(int user_id, String rfid) throws SQLException {
-        String UPDATE_USER_RFID_QS = "UPDATE user SET rfid = ? WHERE id = ?";
+        String UPDATE_USER_RFID_QS = "UPDATE user SET rfid = ? WHERE id = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(UPDATE_USER_RFID_QS)) {
 

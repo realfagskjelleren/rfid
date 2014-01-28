@@ -1,6 +1,7 @@
 package org.ntnu.realfagskjelleren.rfid;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
@@ -403,7 +404,7 @@ public class POS {
         if (isRFID(input)) {
             if (!currentRFID.isEmpty()) {
                 if (input.equals(currentRFID)) {
-                    ui.display(String.format("%s Read again. Ignoring..", currentRFID));
+                    ui.display(String.format("%s read again. Ignoring..", currentRFID));
                     return;
                 }
                 else {
@@ -412,10 +413,24 @@ public class POS {
             }
 
             currentRFID = input;
+            currentUser = null;
+
             try {
+                // Due to the old database format using int to store RFIDs, we have to
+                // check if the RFID matches if we remove the 0 padding on the left
+                // before getting using the get_or_create method.
+                String nonPaddedRFID = StringUtils.stripStart(input, "0");
+
+                if (db.rfid_exists(nonPaddedRFID)) {
+                    currentUser = db.get_or_create(nonPaddedRFID);
+                    db.update_user_rfid(currentUser.getId(), input);
+                }
+
                 currentUser = db.get_or_create(currentRFID);
+
             } catch (SQLException e) {
                 ui.error("SQL error occurred while trying to retrieve user from the database. Check your connection.");
+                resetCurrentInfo();
                 return;
             }
 
