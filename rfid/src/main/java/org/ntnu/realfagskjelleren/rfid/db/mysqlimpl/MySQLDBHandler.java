@@ -621,10 +621,10 @@ public class MySQLDBHandler implements DBHandler {
     @Override
     public String getSalesForDate(String date) throws SQLException {
         String SALES_FOR_DATE = "SELECT SUM(value) AS sales, DATE_FORMAT(date, '%W %d-%m-%Y') AS date " +
-                "FROM `transaction` " +
-                "WHERE is_deposit != 1 " +
-                "AND value < 1000 " +
-                "AND DATE_FORMAT(DATE(date - INTERVAL 9 hour), '%Y-%m-%d') = ?;";
+                                "FROM `transaction` " +
+                                "WHERE is_deposit != 1 " +
+                                "AND value < 1000 " +
+                                "AND DATE_FORMAT(DATE(date - INTERVAL 9 hour), '%Y-%m-%d') = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(SALES_FOR_DATE)) {
 
