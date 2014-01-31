@@ -204,7 +204,6 @@ public class MySQLDBHandler implements DBHandler {
                     ps.setString(1, rfid);
                     ps.setInt(2, makeECC());
                     ps.executeUpdate();
-                    ps.close();
                 }
             }
 
@@ -812,6 +811,38 @@ public class MySQLDBHandler implements DBHandler {
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
+    }
+
+    /**
+     * This method is only supposed to be used with the importing of older SQL databases
+     * to allow the timestamp to be set.
+     *
+     * @param rfid RFID to create a user for
+     * @param created Timestamp it was created
+     * @return True if a user was created
+     * @throws SQLException
+     */
+    @Override
+    public boolean create_user_from_previous_db(String rfid, int credit, Timestamp created) throws SQLException {
+        if (!rfid_exists(rfid)) {
+            String CREATE_USER_QS = "INSERT INTO user (credit, rfid, ecc, is_staff, created) VALUES (?, ?, ?, 0, ?);";
+            try (Connection con = getConnection();
+                 PreparedStatement ps = con.prepareStatement(CREATE_USER_QS)) {
+
+                ps.setInt(1, credit);
+                ps.setString(2, rfid);
+                ps.setInt(3, makeECC());
+                ps.setTimestamp(4, created);
+                ps.executeUpdate();
+
+                return true;
+            } catch (SQLException ex) {
+                logger.error(String.format("Failed to create user for RFID '%s'.", rfid));
+                logger.error(ex.getMessage(), ex);
+                throw ex;
+            }
+        }
+        return false;
     }
 
     /**

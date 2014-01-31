@@ -408,6 +408,7 @@ public class POS {
                     totalSpent = db.totalSpendings(currentRFID);
 
                     ui.endTransaction(String.format("Total money spent by %s: %d", currentRFID, totalSpent));
+                    resetCurrentInfo();
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to find total spendings. Check your connection.");
                 }
