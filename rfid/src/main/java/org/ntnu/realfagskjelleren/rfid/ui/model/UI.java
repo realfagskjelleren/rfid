@@ -34,6 +34,5 @@ public interface UI {
 
     public void showTransactions(List<Transaction> transactions);
     public void showUsers(List<User> users);
-    public void showStats(List<String> stats, List<String> topTen);
 
 }

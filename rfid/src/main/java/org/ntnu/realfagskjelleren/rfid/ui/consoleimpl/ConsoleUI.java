@@ -165,6 +165,7 @@ public class ConsoleUI implements UI {
         List<String> response = Arrays.asList(
                 "RFID: " + user.getRfid(),
                 "---",
+                "Created: " + user.getCreated(),
                 "Last used: " + user.getLastUsed(),
                 "Balance: " + user.getCredit()
         );
@@ -263,18 +264,6 @@ public class ConsoleUI implements UI {
         }
 
         display(table(tableData));
-    }
-
-    /**
-     * Displays statistics
-     *
-     * @param stats List of statistics in form of plain lines
-     * @param topTen List of top ten spenders in form of table data
-     */
-    @Override
-    public void showStats(List<String> stats, List<String> topTen) {
-        display(stats);
-        display(table(topTen));
     }
 
     /*
