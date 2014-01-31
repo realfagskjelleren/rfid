@@ -18,9 +18,6 @@ public class ConvertDataFromRFID1 {
 
     private static Logger logger = LogManager.getLogger(ConvertDataFromRFID1.class.getName());
 
-    private static String oldDbFile = "pos.unread.db";
-
-
     /**
      * Attempts to convert a DB form 1.0 format to the current format.
      *
@@ -37,17 +34,45 @@ public class ConvertDataFromRFID1 {
             return 2;
         }
 
+        String GET_USERS_QS =
+                "SELECT p.id AS id, p.credits AS credits, MIN(t.date) AS created " +
+                "FROM pos AS p " +
+                "LEFT JOIN transact AS t " +
+                "ON t.userid = p.id " +
+                "GROUP BY p.id " +
+                "ORDER BY t.date;";
         try (Connection con = DriverManager.getConnection("jdbc:sqlite:pos.unread.db");
              Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery("SELECT * FROM pos;")) {
+             ResultSet rs = st.executeQuery(GET_USERS_QS)) {
+
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String dateString;
+            Date date;
+            long time;
+            Timestamp created;
 
             while (rs.next()) {
-                User user = db.get_or_create(""+rs.getInt("id"));
+                boolean has_created_date = false;
+                // Find the timestamp when the user was first used, i.e. created
+                dateString = rs.getString("created");
+                if (dateString != null) {
+                    date = dateFormat.parse(dateString);
+                    time = date.getTime();
+                    created = new Timestamp(time);
+                    has_created_date = db.create_user_from_previous_db(""+rs.getInt("id"), rs.getInt("credits"), created);
+                }
 
-                db.deposit(user.getRfid(), rs.getInt("credits"));
+                if (!has_created_date) {
+                    User user = db.get_or_create(""+rs.getInt("id"));
+                    db.deposit(user.getRfid(), rs.getInt("credits"));
+                }
             }
         } catch (SQLException e) {
             logger.error("Something went wrong while importing users.");
+            logger.error(e.getMessage(), e.getCause());
+            return 2;
+        } catch (ParseException e) {
+            logger.error("Something went wrong while importing transactions.");
             logger.error(e.getMessage(), e.getCause());
             return 2;
         }
@@ -77,17 +102,15 @@ public class ConvertDataFromRFID1 {
                     is_deposit = false;
                 }
 
-                Date date = null;
-                String dateString = "";
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
                 try {
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    dateString = rs.getString("date");
-                    date = dateFormat.parse(dateString);
+                    String dateString = rs.getString("date");
+                    Date date = dateFormat.parse(dateString);
                     long time = date.getTime();
                     db.transaction(user.getId(), value, is_deposit, new_balance, new Timestamp(time));
                 } catch (ParseException e) {
-                    logger.error("Failed to parse date: "+dateString);
+                    logger.error("Failed to parse date.");
                     return 2;
                 }
             }
