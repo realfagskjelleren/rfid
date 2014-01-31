@@ -43,7 +43,6 @@ public class POS {
     private DBHandler db;
     private UI ui;
 
-    private String currentRFID = "";
     private User currentUser = null;
 
     public POS() {
@@ -223,7 +222,7 @@ public class POS {
                 exit_application();
                 break;
             case "":
-                if (currentRFID.isEmpty()) {
+                if (currentUser == null) {
                     ui.display("Not valid input.");
                 }
                 else {
@@ -405,9 +404,9 @@ public class POS {
                 int totalSpent = -1;
 
                 try {
-                    totalSpent = db.totalSpendings(currentRFID);
+                    totalSpent = db.totalSpendings(currentUser.getRfid());
 
-                    ui.endTransaction(String.format("Total money spent by %s: %d", currentRFID, totalSpent));
+                    ui.endTransaction(String.format("Total money spent by %s: %d", currentUser.getRfid(), totalSpent));
                     resetCurrentInfo();
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to find total spendings. Check your connection.");
@@ -425,18 +424,16 @@ public class POS {
      */
     public void handleTransactions(String input) {
         if (isRFID(input)) {
-            if (!currentRFID.isEmpty()) {
-                if (input.equals(currentRFID)) {
-                    ui.display(String.format("%s read again. Ignoring..", currentRFID));
+            if (currentUser != null) {
+                if (input.equals(currentUser.getRfid())) {
+                    ui.display(String.format("%s read again. Ignoring..", currentUser.getRfid()));
                     return;
                 }
                 else {
                     ui.endTransaction("New RFID registered. Transaction aborted.");
                 }
+                resetCurrentInfo();
             }
-
-            currentRFID = input;
-            currentUser = null;
 
             try {
                 // Due to the old database format using int to store RFIDs, we have to
@@ -449,7 +446,8 @@ public class POS {
                     db.update_user_rfid(currentUser.getId(), input);
                 }
 
-                currentUser = db.get_or_create(currentRFID);
+                // Fetch it again anyway, so we get the correct object as it exists in the DB now.
+                currentUser = db.get_or_create(input);
 
             } catch (SQLException e) {
                 ui.error("SQL error occurred while trying to retrieve user from the database. Check your connection.");
@@ -487,14 +485,14 @@ public class POS {
                 if (is_deposit) {
                     // Make the deposit
                     try {
-                        db.deposit(currentRFID, amount);
+                        db.deposit(currentUser.getRfid(), amount);
                     } catch (SQLException e) {
                         ui.error("SQL error occurred while attempting to make deposit. Transaction aborted.");
                         return;
                     }
 
                     new_balance = currentUser.getCredit() + amount;
-                    ui.endTransaction(String.format("Deposited %d into RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
+                    ui.endTransaction(String.format("Deposited %d into RFID '%s'. New balance: %d", amount, currentUser.getRfid(), new_balance));
                 }
                 else {
                     if (amount > currentUser.getCredit()) {
@@ -503,13 +501,13 @@ public class POS {
                     }
                     else {
                         try {
-                            db.deduct(currentRFID, amount);
+                            db.deduct(currentUser.getRfid(), amount);
                         } catch (SQLException e) {
                             ui.error("SQL error occurred while trying to withdraw money from this account. Transaction aborted.");
                             return;
                         }
                         new_balance = currentUser.getCredit() - amount;
-                        ui.endTransaction(String.format("Withdrew %d from RFID '%s'. New balance: %d", amount, currentRFID, new_balance));
+                        ui.endTransaction(String.format("Withdrew %d from RFID '%s'. New balance: %d", amount, currentUser.getRfid(), new_balance));
                     }
                 }
 
@@ -539,7 +537,6 @@ public class POS {
      * Just wipes all stored information for current transactions.
      */
     private void resetCurrentInfo() {
-        currentRFID = "";
         currentUser = null;
     }
 
