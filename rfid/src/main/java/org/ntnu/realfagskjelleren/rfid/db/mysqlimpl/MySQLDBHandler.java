@@ -212,7 +212,7 @@ public class MySQLDBHandler implements DBHandler {
                 ps.setString(1, rfid);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        User user = new User(rs.getInt("id"), rs.getString("rfid"), rs.getBoolean("is_staff"), rs.getInt("credit"), rs.getTimestamp("last_used"));
+                        User user = new User(rs.getInt("id"), rs.getString("rfid"), rs.getBoolean("is_staff"), rs.getInt("credit"), rs.getTimestamp("created"), rs.getTimestamp("last_used"));
                         return user;
                     }
                 }
@@ -250,6 +250,7 @@ public class MySQLDBHandler implements DBHandler {
                             rs.getString("rfid"),
                             rs.getBoolean("is_staff"),
                             rs.getInt("credit"),
+                            rs.getTimestamp("created"),
                             rs.getTimestamp("last_used")
                     );
                     return user;
@@ -417,6 +418,7 @@ public class MySQLDBHandler implements DBHandler {
                             rs.getString("rfid"),
                             rs.getBoolean("is_staff"),
                             rs.getInt("credit"),
+                            rs.getTimestamp("created"),
                             rs.getTimestamp("last_used")
                     );
                     users.add(user);
