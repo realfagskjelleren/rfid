@@ -243,8 +243,8 @@ public class ConsoleUI implements UI {
     public void showUsers(List<User> users) {
         List<String> tableData = new ArrayList<>();
 
-        String rowFormat = "%d|%s|%s|%s";
-        String tableHeader = "ID | RFID | Balance | Last used";
+        String rowFormat = "%d|%s|%d|%s|%s";
+        String tableHeader = "ID | RFID | Balance | Created | Last used";
 
         // Generate table
         tableData.add(tableHeader);
@@ -259,6 +259,7 @@ public class ConsoleUI implements UI {
                     u.getId(),
                     u.getRfid(),
                     u.getCredit(),
+                    u.getCreated(),
                     u.getLastUsed()
             ));
         }
