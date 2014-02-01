@@ -31,41 +31,19 @@ public class MySQLDBHandler implements DBHandler {
     }
 
     public boolean testConnection() {
-        boolean success = false;
-
-        Connection con = null;
-        Statement st = null;
-        ResultSet rs = null;
-
-        try {
-            con = getConnection();
-            st = con.createStatement();
-            rs = st.executeQuery("SELECT VERSION()");
+        try (Connection con = getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery("SELECT VERSION()")) {
 
             if (rs.next()) {
-                success = true;
                 logger.debug("MySQL server running version: " + rs.getString(1));
+                return true;
             }
         } catch (SQLException e) {
             logger.error(e.getMessage());
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (st != null) {
-                    st.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-
-            } catch (SQLException ex) {
-                logger.warn(ex.getMessage(), ex);
-            }
         }
 
-        return success;
+        return false;
     }
 
     public boolean createDatabase() {
