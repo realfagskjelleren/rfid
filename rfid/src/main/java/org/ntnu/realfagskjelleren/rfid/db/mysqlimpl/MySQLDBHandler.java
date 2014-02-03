@@ -871,6 +871,7 @@ public class MySQLDBHandler implements DBHandler {
         Random rand = new Random();
         int ecc;
         do {
+            // ECC is now a random number between 100000-999999
             ecc = rand.nextInt((999999 - 100000) + 1) + 100000;
         } while (ecc_exists(ecc));
         return ecc;

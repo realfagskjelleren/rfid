@@ -351,10 +351,13 @@ public class POS {
                 }
                 break;
             case "/updateRfid":
-                if (currentUser == null) {
-                    ui.display("update rfid stuff.");
+                /*if (currentUser == null) {
+                    ui.display("You need an active user to update RFID on.");
+                    return;
                 }
 
+
+                  */
                 break;
             case "/topDays":
                 int amountToShow = -1;
@@ -459,6 +462,22 @@ public class POS {
                 ui.startTransaction(currentUser);
             }
         }
+        else if (isECC(input)) {
+            // No need for a try/catch, isECC checks if it's 6 digits.
+            int ecc = Integer.parseInt(input);
+
+            try {
+                currentUser = db.get_user(ecc);
+            } catch (SQLException e) {
+                ui.error("SQL error occurred while trying to retrieve user from the database. Check your connection.");
+                resetCurrentInfo();
+                return;
+            }
+
+            if (currentUser != null) {
+                ui.startTransaction(currentUser);
+            }
+        }
         else {
             if (currentUser == null) {
                 ui.display("No transaction. Not a valid command.");
@@ -549,6 +568,10 @@ public class POS {
      */
     private boolean isRFID(String s) {
         return s.matches("[a-zA-Z0-9]{8,}");
+    }
+
+    private boolean isECC(String s) {
+        return s.matches("\\d{6}");
     }
 
     public static void main(String[] args) {
