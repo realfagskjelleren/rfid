@@ -539,7 +539,7 @@ public class POS {
 
                 resetCurrentInfo();
             } catch (NumberFormatException e) {
-                logger.error("Not a number.");
+                ui.error("Not a number.");
             }
         }
     }
