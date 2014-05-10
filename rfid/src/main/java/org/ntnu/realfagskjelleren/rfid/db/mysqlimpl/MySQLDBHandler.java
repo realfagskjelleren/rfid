@@ -24,8 +24,6 @@ public class MySQLDBHandler implements DBHandler {
 
     private Settings settings;
 
-    private final String LOG_QS = "INSERT INTO log (message, date) VALUES (?, NOW());";
-
     public MySQLDBHandler(Settings settings) {
         this.settings = settings;
     }
@@ -668,10 +666,12 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public int totalSpendings(String rfid) throws SQLException {
-        String TOP_DAYS_QS = "SELECT SUM( t.value ) AS spent " +
+        String TOP_DAYS_QS =
+                "SELECT SUM( t.value ) AS spent " +
                 "FROM transaction AS t " +
-                "INNER JOIN user AS u ON t.user_id = u.id " +
-                "WHERE t.is_deposit !=1 AND t.value <1000 AND u.rfid = ?;";
+                "INNER JOIN user AS u " +
+                "ON t.user_id = u.id " +
+                "WHERE t.is_deposit != 1 AND t.value < 1000 AND u.rfid = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(TOP_DAYS_QS)) {
 
@@ -854,11 +854,6 @@ public class MySQLDBHandler implements DBHandler {
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
-    }
-
-    @Override
-    public void log(String message) throws SQLException {
-
     }
 
     /**

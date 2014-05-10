@@ -37,7 +37,6 @@ public interface DBHandler {
     public List<String> getTopTenFromLastHours(int hours) throws SQLException;
 
     public void transaction(int user_id, int value, boolean is_deposit, int new_balance) throws SQLException;
-    public void log(String message) throws SQLException;
 
     // Only meant to be used with the import of old sqlite DBs. Remove this when it is no longer needed.
     public boolean create_user_from_previous_db(String rfid, int credit, Timestamp created) throws SQLException;
