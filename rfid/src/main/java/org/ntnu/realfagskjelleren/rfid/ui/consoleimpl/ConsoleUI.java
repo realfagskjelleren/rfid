@@ -68,16 +68,17 @@ public class ConsoleUI implements UI {
                 "| Requires a card to be scanned before use",
                 "---",
                 "+xxx | Inserts xxx into the currently scanned RFID",
-                "xxx | Remove xxx from the currently scanned RFID",
-                "--- | Shows the total amount of money spent from currently scanned RFID",
+                " xxx | Remove xxx from the currently scanned RFID",
+                " --- | Shows the total amount of money spent from currently scanned RFID",
+                "---",
                 "| Other commands",
                 "---",
-                "*** | Quit",
-                "/// | Show all users",
-                "--X | Show the X most profitable days (If X is empty show all)",
-                "++ | Show general stats for the system",
-                "/X | Show X latest transactions (If X is empty show 10)",
-                "*X | Show the top 10 users over the past X hours (If X is empty show 15 hours)"
+                " *** | Quit",
+                " /// | Show all users",
+                " --X | Show the X most profitable days (If X is empty show all)",
+                " ++ | Show general stats for the system",
+                " /X | Show X latest transactions (If X is empty show 10)",
+                " *X | Show the top 10 users over the past X hours (If X is empty show 15 hours)"
         )));
     }
 
