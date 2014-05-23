@@ -114,6 +114,7 @@ public class ConsoleUI implements UI {
             if (input.startsWith("++")) return "/stats " + input.substring(2);
             if (input.startsWith("/")) return "/transactions " + input.substring(1);
             if (input.startsWith("*")) return "/topTen " + input.substring(1);
+            if (input.equals("-")) return "/checksum";
 
             return input;
         } catch (NoSuchElementException e) {

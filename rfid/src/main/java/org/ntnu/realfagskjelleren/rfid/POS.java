@@ -252,6 +252,17 @@ public class POS {
             case "/help":
                 ui.showHelp();
                 break;
+            case "/checksum":
+                if (currentUser == null) {
+                    ui.display("This command requires an RFID to be scanned first.");
+                    return;
+                }
+
+                int converted = ntnuChecksum(currentUser.getRfid());
+
+                ui.endTransaction("This users checksum is "+converted);
+
+                break;
             case "/transactions":
                 int transactionsToShow = 10;
 
@@ -577,6 +588,31 @@ public class POS {
     public static void main(String[] args) {
         logger.trace("Starting RFID POS application.");
         new POS();
+    }
+
+    public int ntnuChecksum(String rfid) {
+        int int_rfid;
+        try {
+            int_rfid = Integer.parseInt(rfid);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+
+        // Make sure 24 bits are allocated every time
+        String binary_rfid = StringUtils.leftPad(Integer.toBinaryString(int_rfid), 24, "0");
+
+        // Reverse every 8 bits
+        String checkSum = "";
+        checkSum += StringUtils.reverse(binary_rfid.substring(0,8));
+        checkSum += StringUtils.reverse(binary_rfid.substring(8,16));
+        checkSum += StringUtils.reverse(binary_rfid.substring(16));
+
+        try {
+            return Integer.parseInt(checkSum);
+        } catch (NumberFormatException e) {
+            logger.error("Checksum calculated was not an integer value.");
+            return -1;
+        }
     }
 
 }
