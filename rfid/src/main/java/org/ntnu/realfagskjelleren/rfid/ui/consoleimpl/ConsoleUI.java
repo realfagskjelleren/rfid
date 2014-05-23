@@ -62,23 +62,32 @@ public class ConsoleUI implements UI {
 
     @Override
     public void showHelp() {
+        display(Arrays.asList(
+                "Flags:",
+                " M = available from main input",
+                " U = available with scanned card"
+        ));
         display(table(Arrays.asList(
-                "Command | Description",
+                "Command | Flag | Description",
+                "===",
+                "|| Financial",
                 "---",
-                "| Requires a card to be scanned before use",
+                "+xxx | - U | Inserts xxx into the currently scanned RFID",
+                " xxx | - U | Remove xxx from the currently scanned RFID",
+                " --- | - U | Shows the total amount of money spent from currently scanned RFID",
+                " /X | M U |Show X latest transactions (if X is empty show 10)",
+                "===",
+                "|| Statistics",
                 "---",
-                "+xxx | Inserts xxx into the currently scanned RFID",
-                " xxx | Remove xxx from the currently scanned RFID",
-                " --- | Shows the total amount of money spent from currently scanned RFID",
+                " ++ | M - | Show general stats for the system",
+                " --X | M - | Show the X most profitable days (if X is empty show all)",
+                " *X | M - | Show the top 10 users over the past X hours (if X is empty show 15 hours)",
+                "===",
+                "|| Other commands",
                 "---",
-                "| Other commands",
-                "---",
-                " *** | Quit",
-                " /// | Show all users",
-                " --X | Show the X most profitable days (If X is empty show all)",
-                " ++ | Show general stats for the system",
-                " /X | Show X latest transactions (If X is empty show 10)",
-                " *X | Show the top 10 users over the past X hours (If X is empty show 15 hours)"
+                " *** | M U | Quit",
+                " /// | M - | Show all users",
+                " - | - U | Show check sum for the currently scanned RFID"
         )));
     }
 
@@ -101,7 +110,12 @@ public class ConsoleUI implements UI {
     public String takeInput(String question) {
         try {
             display(question);
-            console.print("> ");
+            if (active_transaction) {
+                console.print("U:> ");
+            }
+            else {
+                console.print("M:> ");
+            }
             String input = scanner.nextLine();
 
             // If exit signal is found, return exit.
