@@ -260,7 +260,12 @@ public class POS {
 
                 int converted = ntnuChecksum(currentUser.getRfid());
 
-                ui.endTransaction("This users checksum is "+converted);
+                if (converted == -1) {
+                    ui.error("Calculated check sum was not an integer value.");
+                }
+                else {
+                    ui.endTransaction("This users checksum is "+converted);
+                }
 
                 break;
             case "/transactions":
@@ -585,34 +590,35 @@ public class POS {
         return s.matches("\\d{6}");
     }
 
-    public static void main(String[] args) {
-        logger.trace("Starting RFID POS application.");
-        new POS();
-    }
-
     public int ntnuChecksum(String rfid) {
         int int_rfid;
+
         try {
             int_rfid = Integer.parseInt(rfid);
         } catch (NumberFormatException e) {
             return -1;
         }
 
-        // Make sure 24 bits are allocated every time
-        String binary_rfid = StringUtils.leftPad(Integer.toBinaryString(int_rfid), 24, "0");
+        // Make sure 32 bits are allocated every time
+        String binary_rfid = StringUtils.leftPad(Integer.toBinaryString(int_rfid), 32, "0");
 
         // Reverse every 8 bits
         String checkSum = "";
         checkSum += StringUtils.reverse(binary_rfid.substring(0,8));
         checkSum += StringUtils.reverse(binary_rfid.substring(8,16));
-        checkSum += StringUtils.reverse(binary_rfid.substring(16));
+        checkSum += StringUtils.reverse(binary_rfid.substring(16, 24));
+        checkSum += StringUtils.reverse(binary_rfid.substring(24));
 
         try {
-            return Integer.parseInt(checkSum);
+            return Integer.parseInt(checkSum, 2);
         } catch (NumberFormatException e) {
-            logger.error("Checksum calculated was not an integer value.");
             return -1;
         }
+    }
+
+    public static void main(String[] args) {
+        logger.trace("Starting RFID POS application.");
+        new POS();
     }
 
 }
