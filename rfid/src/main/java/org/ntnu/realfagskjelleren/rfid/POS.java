@@ -201,7 +201,7 @@ public class POS {
 
             if (input == null) break;
 
-            logger.debug(MarkerManager.getMarker("input"), "INCOMING " + input);
+            logger.debug(MarkerManager.getMarker("input"), "INCOMING: " + input);
             handleInput(input);
         }
 
@@ -515,6 +515,10 @@ public class POS {
 
             try {
                 int amount = Integer.parseInt(input);
+
+                if (amount < 0) {
+                    ui.error("Negative values are not accepted.");
+                }
 
                 if (amount >= 1000) {
                     if (!ui.takeConfirmation("The amount which was input is very high, are you sure it is correct?")) {
