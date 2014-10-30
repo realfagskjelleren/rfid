@@ -4,6 +4,7 @@ package org.ntnu.realfagskjelleren.rfid;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.MarkerManager;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
 import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
@@ -200,6 +201,7 @@ public class POS {
 
             if (input == null) break;
 
+            logger.debug(MarkerManager.getMarker("input"), "INCOMING " + input);
             handleInput(input);
         }
 
@@ -382,7 +384,7 @@ public class POS {
                     try {
                         amountToShow = Integer.parseInt(args[1]);
                     } catch (NumberFormatException e) {
-                        ui.display("Invalid number to show, showing all.");
+                        ui.display("Invalid number to show. Showing all.");
                     }
                 }
 
@@ -398,6 +400,11 @@ public class POS {
 
                     topDaysData.add("# | Date | Sales");
                     topDaysData.add("===");
+
+                    if (amountToShow > topDays.size()) {
+                        ui.display("The number of days you requested is larger than the number in the database. Showing all.");
+                        amountToShow = topDays.size();
+                    }
 
                     if (amountToShow == -1) amountToShow = topDays.size();
 
