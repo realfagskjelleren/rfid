@@ -793,6 +793,12 @@ public class MySQLDBHandler implements DBHandler {
         }
     }
 
+    /**
+     * Removed entries from the user table that do not have any children in the transaction table.
+     *
+     * @return amount of rows affected
+     * @throws SQLException
+     */
     @Override
     public int pruneInactiveRFIDs() throws SQLException {
         int affectedRows = -1;
