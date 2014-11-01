@@ -438,6 +438,25 @@ public class POS {
                     ui.error("SQL error occurred while trying to find total spendings. Check your connection.");
                 }
                 break;
+            case "/prune":
+                if (currentUser != null) {
+                    ui.display("This command cannot be run when in a transaction block.");
+                    return;
+                }
+
+                try {
+                    int affectedRows = db.pruneInactiveRFIDs();
+
+                    if (affectedRows == 0) {
+                        ui.display("No RFIDs were affected.");
+                    }
+                    else {
+                        ui.display("Removed "+affectedRows+" inactive RFIDs.");
+                    }
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to prune inactive RFIDs.");
+                }
+                break;
             default:
                 ui.invalidCommand();
         }

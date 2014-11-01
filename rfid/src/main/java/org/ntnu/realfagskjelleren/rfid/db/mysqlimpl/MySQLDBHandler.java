@@ -793,6 +793,28 @@ public class MySQLDBHandler implements DBHandler {
         }
     }
 
+    @Override
+    public int pruneInactiveRFIDs() throws SQLException {
+        int affectedRows = -1;
+
+        String PRUNE_QS = "DELETE FROM user WHERE user.id NOT IN (" +
+                          "  SELECT DISTINCT transaction.user_id " +
+                          "  FROM transaction " +
+                          ")";
+        try (Connection con = getConnection();
+             Statement st = con.createStatement()) {
+
+            affectedRows = st.executeUpdate(PRUNE_QS);
+
+        } catch (SQLException ex) {
+            logger.error("Failed to prune inactive user accounts.");
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return affectedRows;
+    }
+
     /**
      * This method is only supposed to be used with the importing of older SQL databases
      * to allow the timestamp to be set.
