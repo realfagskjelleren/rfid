@@ -481,14 +481,16 @@ public class POS {
             }
 
             try {
-                // Due to the old database format using int to store RFIDs, we have to
-                // check if the RFID matches if we remove the 0 padding on the left
-                // before getting using the get_or_create method.
-                String nonPaddedRFID = StringUtils.stripStart(input, "0");
+                if (!db.rfid_exists(input)) {
+                    // Due to the old database format using int to store RFIDs, we have to
+                    // check if the RFID matches if we remove the 0 padding on the left
+                    // before getting using the get_or_create method.
+                    String nonPaddedRFID = StringUtils.stripStart(input, "0");
 
-                if (db.rfid_exists(nonPaddedRFID)) {
-                    currentUser = db.get_or_create(nonPaddedRFID);
-                    db.update_user_rfid(currentUser.getId(), input);
+                    if (db.rfid_exists(nonPaddedRFID)) {
+                        currentUser = db.get_or_create(nonPaddedRFID);
+                        db.update_user_rfid(currentUser.getId(), input);
+                    }
                 }
 
                 // Fetch it again anyway, so we get the correct object as it exists in the DB now.
