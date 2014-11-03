@@ -63,7 +63,7 @@ public class ConvertDataFromRFID1 {
                 }
 
                 if (!has_created_date) {
-                    User user = db.get_or_create(""+rs.getInt("id"));
+                    User user = db.getOrCreate("" + rs.getInt("id"));
                     db.deposit(user.getRfid(), rs.getInt("credits"));
                 }
             }
@@ -84,7 +84,7 @@ public class ConvertDataFromRFID1 {
              ResultSet rs = st.executeQuery("SELECT * FROM transact;")) {
 
             while (rs.next()) {
-                User user = db.get_or_create(""+rs.getInt("userid"));
+                User user = db.getOrCreate("" + rs.getInt("userid"));
 
                 String input = rs.getString("input");
                 int value;

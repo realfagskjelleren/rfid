@@ -75,7 +75,7 @@ public class ConsoleUI implements UI {
                 "+xxx | - U | Inserts xxx into the currently scanned RFID",
                 " xxx | - U | Remove xxx from the currently scanned RFID",
                 " --- | - U | Shows the total amount of money spent from currently scanned RFID",
-                " /X  | M U |Show X latest transactions (if X is empty show 10)",
+                " /X  | M U | Show X latest transactions (if X is empty show 10)",
                 "===",
                 "|| Statistics",
                 "---",
@@ -88,6 +88,7 @@ public class ConsoleUI implements UI {
                 " *** | M U | Quit",
                 " /// | M - | Show all users",
                 " -+-+ | M - | Prune Inactive RFIDs (with no transactions)",
+                " /-*/-* | - U | Merge currently scanned RFID with next scanned RFID",
                 " -   | - U | Show check sum for the currently scanned RFID"
         )));
     }
@@ -120,6 +121,7 @@ public class ConsoleUI implements UI {
             String input = scanner.nextLine();
 
             // If exit signal is found, return exit.
+            if (input.equals("/-*/-*")) return "/merge";
             if (input.equals("-+-+")) return "/prune";
             if (input.equals("***")) return "exit";
             if (input.equals("/*-")) return "/help";

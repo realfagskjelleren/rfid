@@ -438,6 +438,68 @@ public class POS {
                     ui.error("SQL error occurred while trying to find total spendings. Check your connection.");
                 }
                 break;
+            case "/merge":
+                if (currentUser == null) {
+                    ui.display("This command requires an RFID to be scanned first.");
+                    return;
+                }
+
+                ui.display(Arrays.asList(
+                        "You have currently scanned the RFID: " + currentUser.getRfid(),
+                        "If you really wish to merge this RFID with another, scan the other card now."
+                ));
+
+                String otherRFID = ui.takeInput("Scan RFID to merge:");
+
+                if (otherRFID.isEmpty() || !isRFID(otherRFID)) {
+                    ui.endTransaction("No RFID scanned, aborting merge.");
+                    resetCurrentInfo();
+                    return;
+                }
+
+                if (currentUser.getRfid().equals(otherRFID)) {
+                    ui.endTransaction("The scanned RFIDs are identical, aborting merge.");
+                    resetCurrentInfo();
+                    return;
+                }
+
+                try {
+                    if (!db.rfidExists(otherRFID)) {
+                        ui.endTransaction("The scanned RFID to merge with does not exist, aborting merge.");
+                        resetCurrentInfo();
+                        return;
+                    }
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred when trying to check if '" + otherRFID + "' exists.");
+                    return;
+                }
+
+                ui.takeConfirmation("This will merge all data from RFIDs " + currentUser.getRfid() + " and " + otherRFID);
+                ui.takeConfirmation("This cannot be undone, you are 100% sure you want to do this?");
+                ui.takeConfirmation("Are you really, really sure?");
+
+                User otherUser;
+
+                try {
+                    otherUser = db.getOrCreate(otherRFID);
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while trying to fetch the user to merge with.");
+                    return;
+                }
+
+                try {
+                    int otherCredit = otherUser.getCredit();
+                    db.mergeUser(currentUser.getId(), otherUser.getId());
+                    db.deposit(currentUser.getRfid(), otherCredit);
+
+                    ui.endTransaction("Successfully merged RFIDs.");
+                    resetCurrentInfo();
+                    return;
+                } catch (SQLException e) {
+                    ui.error("SQL error occurred while attempting to merge RFID '"+ otherRFID + "' into '"+ currentUser.getRfid() +"'.");
+                }
+
+                break;
             case "/prune":
                 if (currentUser != null) {
                     ui.display("This command cannot be run when in a transaction block.");
@@ -481,20 +543,20 @@ public class POS {
             }
 
             try {
-                if (!db.rfid_exists(input)) {
+                if (!db.rfidExists(input)) {
                     // Due to the old database format using int to store RFIDs, we have to
                     // check if the RFID matches if we remove the 0 padding on the left
-                    // before getting using the get_or_create method.
+                    // before getting using the getOrCreate method.
                     String nonPaddedRFID = StringUtils.stripStart(input, "0");
 
-                    if (db.rfid_exists(nonPaddedRFID)) {
-                        currentUser = db.get_or_create(nonPaddedRFID);
-                        db.update_user_rfid(currentUser.getId(), input);
+                    if (db.rfidExists(nonPaddedRFID)) {
+                        currentUser = db.getOrCreate(nonPaddedRFID);
+                        db.updateUserRfid(currentUser.getId(), input);
                     }
                 }
 
                 // Fetch it again anyway, so we get the correct object as it exists in the DB now.
-                currentUser = db.get_or_create(input);
+                currentUser = db.getOrCreate(input);
 
             } catch (SQLException e) {
                 ui.error("SQL error occurred while trying to retrieve user from the database. Check your connection.");
@@ -511,7 +573,7 @@ public class POS {
             int ecc = Integer.parseInt(input);
 
             try {
-                currentUser = db.get_user(ecc);
+                currentUser = db.getUser(ecc);
             } catch (SQLException e) {
                 ui.error("SQL error occurred while trying to retrieve user from the database. Check your connection.");
                 resetCurrentInfo();

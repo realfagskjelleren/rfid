@@ -171,9 +171,9 @@ public class MySQLDBHandler implements DBHandler {
      * @throws java.sql.SQLException
      */
     @Override
-    public User get_or_create(String rfid) throws SQLException {
+    public User getOrCreate(String rfid) throws SQLException {
         try (Connection con = getConnection()) {
-            if (!rfid_exists(rfid)) {
+            if (!rfidExists(rfid)) {
                 // If it doesn't exist, create
                 String CREATE_USER_QS = "INSERT INTO user (credit, rfid, ecc, is_staff, created) VALUES (0, ?, ?, 0, NOW());";
                 try (PreparedStatement ps = con.prepareStatement(CREATE_USER_QS)) {
@@ -212,7 +212,7 @@ public class MySQLDBHandler implements DBHandler {
      * @throws SQLException
      */
     @Override
-    public User get_user(int ecc) throws SQLException {
+    public User getUser(int ecc) throws SQLException {
         String GET_USER_BY_ECC_QS = "SELECT * FROM user WHERE ecc = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(GET_USER_BY_ECC_QS)) {
@@ -250,7 +250,7 @@ public class MySQLDBHandler implements DBHandler {
      * @throws SQLException
      */
     @Override
-    public void update_user_rfid(int user_id, String rfid) throws SQLException {
+    public void updateUserRfid(int user_id, String rfid) throws SQLException {
         String UPDATE_USER_RFID_QS = "UPDATE user SET rfid = ? WHERE id = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(UPDATE_USER_RFID_QS)) {
@@ -274,7 +274,7 @@ public class MySQLDBHandler implements DBHandler {
      * @throws SQLException
      */
     @Override
-    public boolean rfid_exists(String rfid) throws SQLException {
+    public boolean rfidExists(String rfid) throws SQLException {
         String EXISTS_RFID_QS = "SELECT COUNT(*) FROM user WHERE rfid = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(EXISTS_RFID_QS)) {
@@ -303,7 +303,7 @@ public class MySQLDBHandler implements DBHandler {
      * @throws SQLException
      */
     @Override
-    public boolean ecc_exists(int ecc) throws SQLException {
+    public boolean eccExists(int ecc) throws SQLException {
         String EXISTS_ECC_QS = "SELECT COUNT(*) FROM user WHERE ecc = ?;";
         try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(EXISTS_ECC_QS)) {
@@ -317,6 +317,36 @@ public class MySQLDBHandler implements DBHandler {
 
         } catch (SQLException ex) {
             logger.error(String.format("Failed to retrieve user for ECC '%d'.", ecc));
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        return true;
+    }
+
+    /**
+     * Merges two user accounts. This moves all transactions to the toRFID and afterwards removes fromRFID from the DB.
+     *
+     * @param toUser target for the merge
+     * @param fromUser undesired RFID
+     * @throws SQLException
+     */
+    public boolean mergeUser(int toUser, int fromUser) throws SQLException {
+        String CHANGE_TRANSACTION_OWNER_QS = "UPDATE transaction SET user_id = ? WHERE user_id = ?;";
+        String DELETE_USER_QS = "DELETE FROM user WHERE id = ?;";
+
+        try (Connection con = getConnection();
+             PreparedStatement ps1 = con.prepareStatement(CHANGE_TRANSACTION_OWNER_QS);
+             PreparedStatement ps2 = con.prepareStatement(DELETE_USER_QS)) {
+
+            ps1.setInt(1, toUser);
+            ps1.setInt(2, fromUser);
+            ps1.executeUpdate();
+
+            ps2.setInt(1, fromUser);
+            ps2.execute();
+        } catch (SQLException ex) {
+            logger.error(String.format("Failed to merge UserID '%s' with '%s'.", fromUser, toUser));
             logger.error(ex.getMessage(), ex);
             throw ex;
         }
@@ -832,7 +862,7 @@ public class MySQLDBHandler implements DBHandler {
      */
     @Override
     public boolean create_user_from_previous_db(String rfid, int credit, Timestamp created) throws SQLException {
-        if (!rfid_exists(rfid)) {
+        if (!rfidExists(rfid)) {
             String CREATE_USER_QS = "INSERT INTO user (credit, rfid, ecc, is_staff, created) VALUES (?, ?, ?, 0, ?);";
             try (Connection con = getConnection();
                  PreparedStatement ps = con.prepareStatement(CREATE_USER_QS)) {
@@ -896,7 +926,7 @@ public class MySQLDBHandler implements DBHandler {
         do {
             // ECC is now a random number between 100000-999999
             ecc = rand.nextInt((999999 - 100000) + 1) + 100000;
-        } while (ecc_exists(ecc));
+        } while (eccExists(ecc));
         return ecc;
     }
 
