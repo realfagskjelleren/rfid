@@ -135,7 +135,7 @@ public class POS {
         }
 
         ui = new ConsoleUI(consoleWidth);
-        ui.showWelcomeMessage();
+        ui.showWelcomeMessage(db.getVersion().toString());
 
         logger.trace("Started ConsoleUI with width "+consoleWidth+".");
         return true;

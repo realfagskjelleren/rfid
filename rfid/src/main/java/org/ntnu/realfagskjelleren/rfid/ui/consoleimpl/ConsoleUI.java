@@ -28,7 +28,7 @@ public class ConsoleUI implements UI {
     }
 
     @Override
-    public void showWelcomeMessage() {
+    public void showWelcomeMessage(String version) {
         frameTop();
         if (consoleWidth < 60) {
             printCenterAligned(Arrays.asList(
@@ -55,9 +55,15 @@ public class ConsoleUI implements UI {
                     "     \\|__|                                   ~~       "
             ));
         }
-        printCenterAligned(Arrays.asList("by realfagskjelleren"));
+        frameEmpty();
+        printCenterAligned("RFID version "+ version +" by realfagskjelleren");
         frameEmpty();
         frameBottom();
+    }
+
+    @Override
+    public void showVersion(String version) {
+        display(center("RFID version "+ version +" by realfagskjelleren"));
     }
 
     @Override

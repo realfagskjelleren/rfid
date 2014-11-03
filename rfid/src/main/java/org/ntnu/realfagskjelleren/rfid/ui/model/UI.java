@@ -15,8 +15,9 @@ import java.util.List;
  */
 public interface UI {
 
-    public void showWelcomeMessage();
+    public void showWelcomeMessage(String version);
     public void showHelp();
+    public void showVersion(String version);
     public void invalidCommand();
 
     public String takeInput();
