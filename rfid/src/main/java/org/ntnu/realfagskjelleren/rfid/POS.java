@@ -658,6 +658,7 @@ public class POS {
 
                 if (amount < 0) {
                     ui.error("Negative values are not accepted.");
+                    return;
                 }
 
                 if (amount >= 1000) {
@@ -734,7 +735,7 @@ public class POS {
      * @return true if the string matched the parameters for RFID.
      */
     private boolean isRFID(String s) {
-        return s.matches("[a-zA-Z0-9]{8,}");
+        return s.matches("^[a-zA-Z0-9]{8,}$");
     }
 
     private boolean isECC(String s) {
