@@ -29,6 +29,7 @@ public class Updater implements Runnable {
     private DBHandler db;
 
     private static String updateURL = "http://org.ntnu.no/realfagskjellern/rfid/rfid.jar";
+    private boolean updateDownloaded = false;
 
     public Updater(UI ui, DBHandler db) {
         this.ui = ui;
@@ -97,13 +98,16 @@ public class Updater implements Runnable {
     public void run() {
         logger.debug(MarkerManager.getMarker("updater"), "Starting update manager.");
 
-        while (true) {
+        while (!updateDownloaded) {
             logger.debug(MarkerManager.getMarker("updater"), "Checking for updates.");
 
             if (hasUpdate()) {
                 logger.debug(MarkerManager.getMarker("updater"), "Update found. Downloading update.");
                 if (!downloadUpdate()) ui.error("Failed to download update.");
-                else ui.display("New update has been downloaded! Restart application for update to take effect.");
+                else {
+                    ui.display("New update has been downloaded! Restart application for update to take effect.");
+                    updateDownloaded = true;
+                }
             }
 
             try {
