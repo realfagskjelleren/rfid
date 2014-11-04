@@ -66,7 +66,7 @@ public class Updater implements Runnable {
 
         Version version = db.getVersion();
 
-        Date currentVersion = version.getExecutedOn();
+        Date currentVersion = new Date(version.getExecutedOn().getTime());
         Date latestVersion = new Date(latestUpdate);
 
         if (latestVersion.after(currentVersion)) return true;
