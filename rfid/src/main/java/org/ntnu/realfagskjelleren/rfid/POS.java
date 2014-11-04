@@ -375,13 +375,44 @@ public class POS {
                 }
                 break;
             case "/updateRfid":
-                /*if (currentUser == null) {
+                if (currentUser == null) {
                     ui.display("You need an active user to update RFID on.");
                     return;
                 }
 
+                String newRFID = ui.takeInput("Scan new RFID");
 
-                  */
+                if (!isRFID(newRFID)) {
+                    ui.endTransaction("Not a valid RFID, aborting RFID change.");
+                    resetCurrentInfo();
+                    return;
+                }
+
+                try {
+                    if (db.rfidExists(newRFID)) {
+                        ui.endTransaction("That RFID already exists, aborting RFID change.");
+                        resetCurrentInfo();
+                        return;
+                    }
+                } catch (SQLException ex) {
+                    ui.error("Failed to check database for existing RFID.");
+                }
+
+                if (ui.takeConfirmation("Are you really sure you wish to update this RFID?")) {
+                    try {
+                        db.updateUserRfid(currentUser.getId(), newRFID);
+                        ui.endTransaction("RFID successfully updated.");
+
+                    } catch (SQLException e) {
+                        ui.endTransaction("Failed to update RFID for user_id "+currentUser.getId());
+                    }
+                }
+                else {
+                    ui.endTransaction("Aborting RFID update.");
+                }
+
+                resetCurrentInfo();
+
                 break;
             case "/topDays":
                 int amountToShow = -1;
@@ -480,9 +511,22 @@ public class POS {
                     return;
                 }
 
-                ui.takeConfirmation("This will merge all data from RFIDs " + currentUser.getRfid() + " and " + otherRFID);
-                ui.takeConfirmation("This cannot be undone, you are 100% sure you want to do this?");
-                ui.takeConfirmation("Are you really, really sure?");
+                // Be really really sure about this.
+                if (!ui.takeConfirmation("This will merge all data from RFIDs " + currentUser.getRfid() + " and " + otherRFID)) {
+                    ui.endTransaction("Aborting..");
+                    resetCurrentInfo();
+                    return;
+                }
+                if (!ui.takeConfirmation("This cannot be undone, you are 100% sure you want to do this?")) {
+                    ui.endTransaction("Aborting..");
+                    resetCurrentInfo();
+                    return;
+                }
+                if (!ui.takeConfirmation("Are you really, really sure?")) {
+                    ui.endTransaction("Aborting..");
+                    resetCurrentInfo();
+                    return;
+                }
 
                 User otherUser;
 

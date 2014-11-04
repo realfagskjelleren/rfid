@@ -94,10 +94,10 @@ public class ConsoleUI implements UI {
                 " ***    | M U | Quit",
                 " ///    | M - | Show all users",
                 " -+-+   | M - | Prune Inactive RFIDs (with no transactions)",
+                " ++++   | - U | Change the RFID for a user",
                 " /-*/-* | - U | Merge currently scanned RFID with next scanned RFID",
                 " -      | - U | Show check sum for the currently scanned RFID",
-                " +      | M U | Show the system version",
-                " "
+                " +      | M U | Show the system version"
         )));
     }
 
