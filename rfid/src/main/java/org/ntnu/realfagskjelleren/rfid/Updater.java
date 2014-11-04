@@ -33,7 +33,6 @@ public class Updater implements Runnable {
     public Updater(UI ui, DBHandler db) {
         this.ui = ui;
         this.db = db;
-
         new Thread(this).start();
     }
 
@@ -41,10 +40,8 @@ public class Updater implements Runnable {
         long latestUpdate = -1L;
 
         try {
-
             URL url = new URL(updateURL);
             HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-
             latestUpdate = httpCon.getLastModified();
             if (latestUpdate == 0) {
                 logger.debug(MarkerManager.getMarker("updater"), "No Last-Modified header found, checking connection.");
@@ -111,7 +108,8 @@ public class Updater implements Runnable {
 
             try {
                 synchronized (this) {
-                    this.wait(15000L);
+                    // Only poll once per day
+                    this.wait(86400000L);
                 }
             } catch (InterruptedException e) {
                 logger.debug(MarkerManager.getMarker("updater"), "Updater was interupted.");

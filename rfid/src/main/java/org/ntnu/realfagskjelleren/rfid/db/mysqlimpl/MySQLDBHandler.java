@@ -2,6 +2,7 @@ package org.ntnu.realfagskjelleren.rfid.db.mysqlimpl;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.MarkerManager;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
 import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
@@ -119,8 +120,9 @@ public class MySQLDBHandler implements DBHandler {
                 return new Version(rs.getString("version"), rs.getTimestamp("executed_on"));
             }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            logger.error(MarkerManager.getMarker("db"), "SQL error occurred while attempting to get version.");
+            logger.error(ex.getMessage(), ex);
         }
 
         return null;

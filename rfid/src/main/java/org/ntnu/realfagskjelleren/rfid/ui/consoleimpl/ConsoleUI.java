@@ -78,24 +78,26 @@ public class ConsoleUI implements UI {
                 "===",
                 "|| Financial",
                 "---",
-                "+xxx | - U | Inserts xxx into the currently scanned RFID",
-                " xxx | - U | Remove xxx from the currently scanned RFID",
-                " --- | - U | Shows the total amount of money spent from currently scanned RFID",
-                " /X  | M U | Show X latest transactions (if X is empty show 10)",
+                "+xxx    | - U | Inserts xxx into the currently scanned RFID",
+                " xxx    | - U | Remove xxx from the currently scanned RFID",
+                " ---    | - U | Shows the total amount of money spent from currently scanned RFID",
+                " /X     | M U | Show X latest transactions (if X is empty show 10)",
                 "===",
                 "|| Statistics",
                 "---",
-                " ++  | M - | Show general stats for the system",
-                " --X | M - | Show the X most profitable days (if X is empty show all)",
-                " *X  | M - | Show the top 10 users over the past X hours (if X is empty show 15 hours)",
+                " ++     | M - | Show general stats for the system",
+                " --X    | M - | Show the X most profitable days (if X is empty show all)",
+                " *X     | M - | Show the top 10 users over the past X hours (if X is empty show 15 hours)",
                 "===",
                 "|| Other commands",
                 "---",
-                " *** | M U | Quit",
-                " /// | M - | Show all users",
-                " -+-+ | M - | Prune Inactive RFIDs (with no transactions)",
+                " ***    | M U | Quit",
+                " ///    | M - | Show all users",
+                " -+-+   | M - | Prune Inactive RFIDs (with no transactions)",
                 " /-*/-* | - U | Merge currently scanned RFID with next scanned RFID",
-                " -   | - U | Show check sum for the currently scanned RFID"
+                " -      | - U | Show check sum for the currently scanned RFID",
+                " +      | M U | Show the system version",
+                " "
         )));
     }
 
@@ -139,6 +141,7 @@ public class ConsoleUI implements UI {
             if (input.startsWith("/")) return "/transactions " + input.substring(1);
             if (input.startsWith("*")) return "/topTen " + input.substring(1);
             if (input.equals("-")) return "/checksum";
+            if (input.equals("+")) return "/version";
 
             return input;
         } catch (NoSuchElementException e) {

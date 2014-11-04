@@ -59,6 +59,9 @@ public class POS {
         // Attempt to find old data to import into new system
         if (!attemptImport()) exit_application();
 
+        // Run migrations
+        if (!runMigrations()) exit_application();
+
         // Launch the updater
         if (settings.getAutomaticUpdates()) new Updater(ui, db);
 
@@ -103,18 +106,6 @@ public class POS {
             // If version is null, the table was newly created and there is no version yet.
             if (!db.setVersion("2.0")) return false;
             logger.debug("Detected new database. Database version set to '2.0'.");
-        }
-        else if (!RFID_VERSION.equals(version.toString())) {
-            /*
-                This case should not happen to anyone yet.
-
-                The plan for having versions is to be able to upgrade existing databases to a new
-                schema without requiring the users of this system to actually perform any operations.
-                Currently there are no need for such migrations, but considering future development
-                it was added.
-             */
-            logger.error("You have an older version of the DB. Ask realfagskjelleren how to proceed.");
-            return false;
         }
 
         logger.trace("Database connection successful.");
@@ -190,6 +181,18 @@ public class POS {
         }
 
         return false;
+    }
+
+    private boolean runMigrations() {
+
+        Version version = db.getVersion();
+
+        switch (version.getVersion()) {
+            case "2.0":
+                db.setVersion("2.1");
+        }
+
+        return true;
     }
 
     /**
@@ -521,6 +524,13 @@ public class POS {
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to prune inactive RFIDs.");
                 }
+                break;
+            case "/version":
+                Version version = db.getVersion();
+
+                if (version == null) ui.display("Could not get version. See logs for more info.");
+                else ui.display("Current system version: "+version.getVersion());
+
                 break;
             default:
                 ui.invalidCommand();
