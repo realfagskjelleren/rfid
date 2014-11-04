@@ -21,6 +21,7 @@ public class Settings {
     private String dbName = "** Replace with name of the database";
     private String dbPort = "* 3306";
     private String consoleWidth = "* 120";
+    private String automaticUpdates = "* true";
 
     public Settings() {
     }
@@ -49,6 +50,10 @@ public class Settings {
         return consoleWidth;
     }
 
+    public boolean getAutomaticUpdates() {
+        return automaticUpdates.equals("true");
+    }
+
     public boolean cleanOptionalFields() {
         boolean change = false;
 
@@ -58,6 +63,10 @@ public class Settings {
         }
         if (this.consoleWidth.startsWith("* ")) {
             this.consoleWidth = this.consoleWidth.substring(2);
+            change = true;
+        }
+        if (this.automaticUpdates.startsWith("* ")) {
+            this.automaticUpdates = this.automaticUpdates.substring(2);
             change = true;
         }
 

@@ -9,6 +9,7 @@ target/
 
 release*
 beta*
+rfid.jar*
 
 # idea ignores
 .idea/

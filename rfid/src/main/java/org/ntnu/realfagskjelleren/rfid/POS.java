@@ -5,11 +5,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.MarkerManager;
+import org.ntnu.realfagskjelleren.rfid.db.migrations.ConvertDataFromRFID1;
 import org.ntnu.realfagskjelleren.rfid.db.model.DBHandler;
 import org.ntnu.realfagskjelleren.rfid.db.model.Transaction;
 import org.ntnu.realfagskjelleren.rfid.db.model.User;
 import org.ntnu.realfagskjelleren.rfid.db.model.Version;
-import org.ntnu.realfagskjelleren.rfid.db.model.migrations.ConvertDataFromRFID1;
 import org.ntnu.realfagskjelleren.rfid.db.mysqlimpl.MySQLDBHandler;
 import org.ntnu.realfagskjelleren.rfid.settings.Settings;
 import org.ntnu.realfagskjelleren.rfid.settings.VerifySettings;
@@ -38,7 +38,7 @@ public class POS {
 
     private static Logger logger = LogManager.getLogger(POS.class.getName());
 
-    private final String RFID_DATABASE_VERSION = "2.0";
+    private final String RFID_VERSION = "2.1";
 
     private Settings settings;
     private DBHandler db;
@@ -47,10 +47,10 @@ public class POS {
     private User currentUser = null;
 
     public POS() {
-        // Attempt to read settings.
+        // Attempt to read settings
         if (!loadSettings()) exit_application();
 
-        // Initiate database Check database connection.
+        // Initiate database Check database connection
         if (!initiateDB()) exit_application();
 
         // Start the UI
@@ -59,7 +59,13 @@ public class POS {
         // Attempt to find old data to import into new system
         if (!attemptImport()) exit_application();
 
-        // Start program.
+        // Run migrations
+        if (!runMigrations()) exit_application();
+
+        // Launch the updater
+        if (settings.getAutomaticUpdates()) new Updater(ui, db);
+
+        // Start the RFID scanner app
         start();
     }
 
@@ -98,20 +104,8 @@ public class POS {
         Version version = db.getVersion();
         if (version == null) {
             // If version is null, the table was newly created and there is no version yet.
-            if (!db.setVersion(RFID_DATABASE_VERSION)) return false;
-            logger.debug("Detected new database. Database version set to '"+ RFID_DATABASE_VERSION +"'.");
-        }
-        else if (!RFID_DATABASE_VERSION.equals(version.toString())) {
-            /*
-                This case should not happen to anyone yet.
-
-                The plan for having versions is to be able to upgrade existing databases to a new
-                schema without requiring the users of this system to actually perform any operations.
-                Currently there are no need for such migrations, but considering future development
-                it was added.
-             */
-            logger.error("You have an older version of the DB. Ask realfagskjelleren how to proceed.");
-            return false;
+            if (!db.setVersion("2.0")) return false;
+            logger.debug("Detected new database. Database version set to '2.0'.");
         }
 
         logger.trace("Database connection successful.");
@@ -187,6 +181,18 @@ public class POS {
         }
 
         return false;
+    }
+
+    private boolean runMigrations() {
+
+        Version version = db.getVersion();
+
+        switch (version.getVersion()) {
+            case "2.0":
+                db.setVersion("2.1");
+        }
+
+        return true;
     }
 
     /**
@@ -518,6 +524,13 @@ public class POS {
                 } catch (SQLException e) {
                     ui.error("SQL error occurred while trying to prune inactive RFIDs.");
                 }
+                break;
+            case "/version":
+                Version version = db.getVersion();
+
+                if (version == null) ui.display("Could not get version. See logs for more info.");
+                else ui.display("Current system version: "+version.getVersion());
+
                 break;
             default:
                 ui.invalidCommand();
